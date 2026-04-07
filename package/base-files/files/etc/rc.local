@@ -2,3 +2,4 @@
 # the system init finished. By default this file does nothing.
 
 exit 0
+[ ! -e /var/run/ubus.sock ] && ln -sf /var/run/ubus/ubus.sock /var/run/ubus.sock

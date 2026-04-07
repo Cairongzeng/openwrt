@@ -1,0 +1,75 @@
+msgid "Monitor"
+msgstr "监控"
+
+msgid "System Monitor"
+msgstr "系统监控"
+
+msgid "User Records"
+msgstr "终端记录"
+
+msgid "Online/Offline Records"
+msgstr "上下线记录"
+
+msgid "Search"
+msgstr "查询"
+
+msgid "Reset"
+msgstr "重置"
+
+msgid "Event"
+msgstr "事件"
+
+msgid "User Info"
+msgstr "用户信息"
+
+msgid "Upstream Traffic"
+msgstr "上传流量"
+
+msgid "Downstream Traffic"
+msgstr "下载流量"
+
+msgid "Online Duration"
+msgstr "在线时长"
+
+msgid "Active Duration"
+msgstr "活跃时长"
+
+msgid "Recent Apps"
+msgstr "最近应用"
+
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
+msgid "No Data"
+msgstr "暂无数据"
+
+msgid "Prev Page"
+msgstr "上一页"
+
+msgid "Next Page"
+msgstr "下一页"
+
+msgid "Total"
+msgstr "共"
+
+msgid "Records"
+msgstr "条"
+
+msgid "MAC Address"
+msgstr "MAC地址"
+
+msgid "h"
+msgstr "时"
+
+msgid "m"
+msgstr "分"
+
+msgid "s"
+msgstr "秒"
+
+msgid "Device Online"
+msgstr "终端上线"
+
+msgid "Device Offline"
+msgstr "终端下线"
+

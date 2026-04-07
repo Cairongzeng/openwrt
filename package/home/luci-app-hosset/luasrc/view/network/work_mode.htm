@@ -1,0 +1,149 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com> -->
+<%+header%>
+<script src="/luci-static/resources/jquery-3.7.1.min.js"></script>
+<script src="/luci-static/resources/common.js"></script>
+
+<style>
+.app-form-card select {
+    width: 200px !important;
+}
+.app-form-card .form-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+.app-form-card .form-desc {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.app-form-card .form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+.app-form-card .form-label {
+    width: 140px;
+    font-weight: 500;
+    color: inherit;
+}
+button#wm-save {
+    width: 80px !important;
+    height: 30px !important;
+    background-color: #5c9bd5 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 30px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#wm-save:hover {
+    background-color: #4a8ac2 !important;
+}
+button#wm-refresh {
+    width: 80px !important;
+    height: 30px !important;
+    background: transparent !important;
+    border: 1px solid #5c9bd5 !important;
+    color: #5c9bd5 !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 28px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#wm-refresh:hover {
+    background: #e6f0ff !important;
+    border-color: #4a8ac2 !important;
+    color: #4a8ac2 !important;
+}
+body {
+    font-family: "Source Han Sans CN", "思源黑体", "Noto Sans CJK SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+</style>
+
+<div class="app-form-card" style="max-width:1000px; margin:0 auto; padding:5px">
+    <div class="form-title"><%:Work Mode%></div>
+    <div class="form-desc"><%:Work mode affects behavior management and Internet audit. Please select the correct mode. Note that downstream traffic cannot be counted in bypass mode.%></div>
+    <div class="form-row">
+        <label class="form-label"><%:Work Mode%></label>
+        <select id="work-mode">
+            <option value="0"><%:Gateway Mode%></option>
+            <option value="1"><%:Bypass Mode%></option>
+        </select>
+    </div>
+    <div class="button-container" style="margin-top:20px; margin-bottom:50px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="wm-refresh"><%:Refresh%></button>
+        <button id="wm-save"><%:Save%></button>
+    </div>
+    <div class="status-tip" id="wm-tip"></div>
+</div>
+
+<script>
+(function(){
+    var _SavedSuccessfully = '<%:Saved successfully%>';
+    var _SaveFailed = '<%:Save failed%>';
+    var _Loading = '<%:Loading...%>';
+    var _LoadFailed = '<%:Load failed%>';
+    
+    const apiGet = '<%=url("admin/network/get_work_mode")%>';
+    const apiSet = '<%=url("admin/network/set_work_mode")%>';
+    
+    function showModal(msg, ok) {
+        if (ok) {
+            showCommonModal(msg, 2000, 'success');
+        } else {
+            showCommonModal(msg, 2000, 'error');
+        }
+    }
+    
+    function refresh() {
+        $('#wm-tip').text(_Loading);
+        $.getJSON(apiGet, function(resp){
+            const d = (resp && resp.data) || {};
+            $('#work-mode').val((d.work_mode === 1) ? "1" : "0");
+            $('#wm-tip').text('');
+        }).fail(function(){
+            $('#wm-tip').text(_LoadFailed);
+        });
+    }
+    
+    function save() {
+        const payload = { work_mode: $('#work-mode').val() || "0" };
+        $('#wm-save').prop('disabled', true);
+        $.ajax({
+            url: apiSet,
+            method: 'POST',
+            data: payload
+        }).done(function(resp){
+            if (resp && (resp.code === 0 || resp.code === 2000)) {
+                showModal(_SavedSuccessfully, true);
+            } else {
+                showModal(_SaveFailed, false);
+            }
+        }).fail(function(){
+            showModal(_SaveFailed, false);
+        }).always(function(){
+            $('#wm-save').prop('disabled', false);
+        });
+    }
+    
+    $('#wm-refresh').on('click', refresh);
+    $('#wm-save').on('click', save);
+    $(refresh);
+})();
+</script>
+
+<%+footer%>

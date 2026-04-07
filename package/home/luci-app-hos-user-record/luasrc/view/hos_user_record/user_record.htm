@@ -1,0 +1,172 @@
+<%+header%>
+<link rel="stylesheet" href="<%=resource%>/css/common.css">
+<script src="<%=resource%>/jquery-3.7.1.min.js"></script>
+
+<div style="padding: 8px;">
+    <div class="cbi-section">
+        <ul class="tab-list" style="margin-bottom: 12px;">
+            <li class="tab-item active"><%:Online/Offline Records%></li>
+        </ul>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <input id="q-mac" class="cbi-input-text" type="text" placeholder="<%:MAC Address%>" style="width:220px;">
+            <input id="q-start" class="cbi-input-text" type="datetime-local" style="width:220px;">
+            <input id="q-end" class="cbi-input-text" type="datetime-local" style="width:220px;">
+            <button type="button" class="cbi-button cbi-button-action" id="btn-search"><%:Search%></button>
+            <button type="button" class="cbi-button" id="btn-reset"><%:Reset%></button>
+        </div>
+
+        <table class="table cbi-section-table" id="record-table" style="table-layout: fixed; width: 100%;">
+            <tr class="tr">
+                <th class="th" style="width: 18%;"><%:Time%></th>
+                <th class="th" style="width: 10%;"><%:Event%></th>
+                <th class="th" style="width: 24%;"><%:User Info%></th>
+                <th class="th" style="width: 13%;"><%:Upstream Traffic%></th>
+                <th class="th" style="width: 13%;"><%:Downstream Traffic%></th>
+                <th class="th" style="width: 10%;"><%:Online Duration%></th>
+                <th class="th" style="width: 10%;"><%:Active Duration%></th>
+                <th class="th" style="width: 22%;"><%:Recent Apps%></th>
+            </tr>
+            <tr class="tr">
+                <td class="td" colspan="8"><em><br /><%:Collecting data...%></em></td>
+            </tr>
+        </table>
+        <div id="pagination" style="margin-top: 12px;"></div>
+    </div>
+</div>
+
+<style>
+.tab-list { display:flex; list-style:none; padding:0; margin:0; border-bottom:1px solid var(--border-color-medium, #d1d5db); }
+.tab-item { padding:4px 14px; border:1px solid var(--border-color-medium, #d1d5db); border-bottom:none; border-radius:5px 5px 0 0; background:var(--background-color-low, #f5f5f5); }
+.tab-item.active { font-weight:600; background:var(--background-color-high, #fff); }
+#record-table .th { padding-top: 12px; padding-bottom: 12px; }
+#record-table .td { padding-top: 12px; padding-bottom: 12px; line-height: 1.6; }
+</style>
+
+<script type="text/javascript">
+//<![CDATA[
+(function() {
+    var page = 1;
+    var pageSize = 15;
+    var totalPage = 1;
+    var totalNum = 0;
+
+    function toBytesStr(bytes) {
+        var v = parseInt(bytes || 0, 10);
+        if (v < 1024) return v + " B";
+        if (v < 1024 * 1024) return Math.round(v / 1024) + " KB";
+        if (v < 1024 * 1024 * 1024) return Math.round(v / (1024 * 1024)) + " MB";
+        return (v / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    }
+
+    function toDurationStr(sec) {
+        var s = parseInt(sec || 0, 10);
+        var h = Math.floor(s / 3600);
+        var m = Math.floor((s % 3600) / 60);
+        var r = s % 60;
+        if (h > 0) return h + "<%:h%>" + m + "<%:m%>";
+        if (m > 0) return m + "<%:m%>" + r + "<%:s%>";
+        return r + "<%:s%>";
+    }
+
+    function getTsFromInput(id) {
+        var v = $(id).val();
+        if (!v) return 0;
+        var ms = new Date(v).getTime();
+        if (!ms || ms < 0) return 0;
+        return Math.floor(ms / 1000);
+    }
+
+    function renderList(data) {
+        var list = Array.isArray(data.list) ? data.list : [];
+        var $tb = $("#record-table");
+        $tb.find("tr:gt(0)").remove();
+        if (list.length === 0) {
+            $tb.append('<tr class="tr"><td class="td" colspan="8"><em><br /><%:No Data%></em></td></tr>');
+            return;
+        }
+        list.forEach(function(it) {
+            var actionOnline = parseInt(it.action || 0, 10) === 0;
+            var actionText = actionOnline ? "<%:Device Online%>" : "<%:Device Offline%>";
+            var actionColor = actionOnline ? "#22c55e" : "#ef4444";
+            var name = (it.nickname && it.nickname.length > 0) ? it.nickname : ((it.hostname && it.hostname.length > 0) ? it.hostname : "");
+            var apps = Array.isArray(it.recent_apps) ? it.recent_apps.map(function(a) { return (a && a.name) ? a.name : ""; }).filter(function(x){ return x.length > 0; }) : [];
+            var appStr = apps.length > 0 ? apps.join(", ") : "--";
+            var macText = it.mac || "--";
+            var userInfo = macText + (name ? (" (" + name + ")") : "");
+
+            var upStr = actionOnline ? "-" : toBytesStr(it.up_bytes);
+            var downStr = actionOnline ? "-" : toBytesStr(it.down_bytes);
+            var onlineDur = actionOnline ? "-" : toDurationStr(it.online_duration);
+            var activeDur = actionOnline ? "-" : toDurationStr(it.active_duration);
+
+            var row = '<tr class="tr">'
+                + '<td class="td">' + (it.time_str || "--") + '</td>'
+                + '<td class="td"><span style="color:' + actionColor + ';font-weight:600;">' + actionText + '</span></td>'
+                + '<td class="td" title="' + userInfo + '">' + userInfo + '</td>'
+                + '<td class="td">' + upStr + '</td>'
+                + '<td class="td">' + downStr + '</td>'
+                + '<td class="td">' + onlineDur + '</td>'
+                + '<td class="td">' + activeDur + '</td>'
+                + '<td class="td" title="' + appStr + '">' + appStr + '</td>'
+                + '</tr>';
+            $tb.append(row);
+        });
+    }
+
+    function renderPagination() {
+        var $p = $("#pagination");
+        if (totalPage <= 1) {
+            $p.html("");
+            return;
+        }
+        var html = '<div style="display:flex;gap:6px;align-items:center;justify-content:center;">';
+        html += '<button type="button" class="cbi-button" ' + (page <= 1 ? 'disabled' : 'onclick="window.__urGoto(' + (page - 1) + ')"') + '><%:Prev Page%></button>';
+        html += '<span>' + page + ' / ' + totalPage + '</span>';
+        html += '<button type="button" class="cbi-button" ' + (page >= totalPage ? 'disabled' : 'onclick="window.__urGoto(' + (page + 1) + ')"') + '><%:Next Page%></button>';
+        html += '<span style="color:#999;"><%:Total%> ' + totalNum + ' <%:Records%></span>';
+        html += '</div>';
+        $p.html(html);
+    }
+
+    function load() {
+        new XHR().get("<%=url('admin/user_record_api/get_user_records')%>", {
+            mac: $("#q-mac").val() || "",
+            start_time: getTsFromInput("#q-start"),
+            end_time: getTsFromInput("#q-end"),
+            page: page,
+            page_size: pageSize
+        }, function(x, data) {
+            var resp = data || {};
+            totalNum = parseInt(resp.total_num || 0, 10);
+            totalPage = parseInt(resp.total_page || 1, 10);
+            page = parseInt(resp.page || page, 10);
+            renderList(resp);
+            renderPagination();
+        });
+    }
+
+    window.__urGoto = function(p) {
+        if (p < 1 || p > totalPage || p === page) return;
+        page = p;
+        load();
+    };
+
+    $("#btn-search").on("click", function() {
+        page = 1;
+        load();
+    });
+    $("#btn-reset").on("click", function() {
+        $("#q-mac").val("");
+        $("#q-start").val("");
+        $("#q-end").val("");
+        page = 1;
+        load();
+    });
+
+    load();
+})();
+//]]>
+</script>
+<%+footer%>
+

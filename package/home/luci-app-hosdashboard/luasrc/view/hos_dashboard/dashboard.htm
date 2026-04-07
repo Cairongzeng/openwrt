@@ -1,0 +1,2528 @@
+<link rel="stylesheet" href="<%=resource%>/css/common.css">
+<script src="<%=resource%>/jquery-3.7.1.min.js"></script>
+<script src="<%=resource%>/echarts.min.js"></script>
+
+<style>
+    :root {
+        --chart-text-color: #333333;
+        --chart-axis-line-color: rgba(0, 0, 0, 0.2);
+        --chart-axis-label-color: #666666;
+        --chart-split-line-color: rgba(0, 0, 0, 0.08);
+        --chart-split-line-dashed-color: rgba(0, 0, 0, 0.15);
+        --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+        --chart-tooltip-text: #333333;
+    }
+    
+    .dash {
+        display: grid;
+        grid-template-columns: 1fr 300px; 
+        gap: 12px;
+        padding: 8px;
+    }
+    .card {
+        border-radius: 8px;
+        padding: 4px 12px;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+    }
+    #active-app-card {
+        min-height: auto;
+    }
+    .card h3 { margin: 0 0 2px 0; font-size: 14px; }
+    .chart-container {
+        flex: 1;
+        min-height: 250px;
+        height: 35vh;
+        max-height: 450px;
+    }
+    #pie-app-card, #bar-user-traffic-card {
+        min-height: 470px;  
+    }
+    #pie-app-card .chart-container, #bar-user-traffic-card .chart-container {
+        min-height: 400px; 
+        height: 100%;  
+        max-height: none; 
+    }
+    .tab-btn {
+        padding: 4px 12px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover {
+    }
+    .tab-btn.active {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #3b82f6;
+    }
+    .top-stats { display:grid; grid-template-columns: repeat(5,1fr); gap:8px; margin-bottom:10px; }
+    .top-stats .big { font-size:15px; font-weight:600; }
+    .top-stats .top-stat-value {
+        font-size:15px;
+        font-weight:160;
+    }
+    .mini {
+        border-radius: 8px;
+        padding: 15px 10px;
+        font-size: 12px;
+        line-height: 1.4;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .mini > div:first-child {
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .top-stats .mini > div:first-child {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .kv { display: grid; grid-template-columns: 90px 1fr; row-gap: 6px; column-gap: 4px; font-size: 13px; }
+    #sys-model, #sys-cpu-model-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .meter { height: 6px; background: rgba(0, 0, 0, 0.08); border-radius: 0; overflow: visible; position: relative; }
+    
+    [data-darkmode="true"] .meter { background: #1f2933; }
+    .bar { height: 100%; width: 0; background: linear-gradient(90deg,#16a34a,#22c55e); position: relative; overflow: visible; border-radius: 0; }
+    
+    .sys-info-layout {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: start;
+    }
+    .sys-info-text {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .sys-info-text-item {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .sys-info-text-label {
+        margin-right: 6px;
+    }
+    .sys-info-text-value {
+        font-weight: 500;
+    }
+    .sys-info-circulars {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+    }
+    
+    .circular-progress {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .circular-progress-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 85px;
+        height: 85px;
+    }
+    .circular-progress svg {
+        width: 85px;
+        height: 85px;
+        transform: rotate(-90deg);
+    }
+    .circular-progress-label {
+        margin-top: 10px;
+        font-size: 13px;
+        text-align: center;
+    }
+    .circular-progress .progress-ring-bg {
+        fill: none;
+        stroke: rgba(0, 0, 0, 0.1); 
+        stroke-width: 7;
+    }
+    
+    [data-darkmode="true"] .circular-progress .progress-ring-bg {
+        stroke: rgba(255,255,255,0.1);
+    }
+    .circular-progress .progress-ring {
+        fill: none;
+        stroke-width: 7;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease;
+    }
+    .circular-progress.cpu .progress-ring {
+        stroke: url(#cpuGradient);
+    }
+    .circular-progress.mem .progress-ring {
+        stroke: url(#memGradient);
+    }
+    .circular-progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .progress-info {
+        display: flex;
+        flex-direction: column;
+        margin-left: 12px;
+    }
+    .progress-info-label {
+        font-size: 12px;
+        margin-bottom: 2px;
+    }
+    .progress-info-value {
+        font-size: 16px;
+        font-weight: 600;
+    }
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
+    .list {
+        font-size: 13px;
+        min-height: 300px;
+    }
+    .list table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .list th, .list td { border-bottom: 1px solid var(--border-color-low); padding: 6px 4px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .list th:nth-child(1), .list td:nth-child(1) { width: 12%; } 
+    .list th:nth-child(2), .list td:nth-child(2) { width: 10%; } 
+    .list th:nth-child(3), .list td:nth-child(3) { width: 10%; } 
+    .list th:nth-child(4), .list td:nth-child(4) { width: 10%; } 
+    .list th:nth-child(5), .list td:nth-child(5) { width: 12%; } 
+    .list th:nth-child(6), .list td:nth-child(6) { width: 12%; } 
+    .list th:nth-child(7), .list td:nth-child(7) { width: 12%; } 
+    .list th:nth-child(8), .list td:nth-child(8) { width: 22%; } 
+    .right-col { display: grid; gap: 10px; align-content: start; }
+    .spark { height: 70px; }
+    .app-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 12px;
+        padding: 4px 0;
+        min-height: 60px;
+    }
+    .app-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        cursor: pointer;
+    }
+    .app-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-bottom: 6px;
+    }
+    .app-name {
+        font-size: 12px;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+    .active-url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: 0;
+        height: 350px;
+        overflow: hidden;
+        position: relative;
+        justify-content: flex-start;
+    }
+    .active-url-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color-low);
+    }
+    .active-url-item.slide-in {
+        animation: slideInFromBottom 0.4s ease-out;
+    }
+    @keyframes slideInFromBottom {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    .active-url-item:last-child {
+        border-bottom: none;
+    }
+    .active-url-item {
+        font-size: 12px;
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .active-url-item.www-highlight {
+    }
+    .active-url-name {
+        font-weight: 500;
+        margin-right: 6px;
+    }
+    .active-url-url {    }
+    .active-url-item.www-highlight .active-url-url {
+        color: #22c55e;
+    }
+    .tooltip {
+        position: absolute;
+        background: rgba(60,60,60,0.9);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 12px;
+        min-width: 280px;
+        font-size: 12px;
+        line-height: 1.6;
+        z-index: 1000;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: none;
+    }
+    
+    .tooltip-top {
+        bottom: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .tooltip-bottom {
+        top: 100%;
+        margin-top: 8px;
+    }
+    
+    .tooltip-left {
+        right: 100%;
+        margin-right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .tooltip-right {
+        left: 100%;
+        margin-left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .tooltip-top::before {
+        content: '';
+        position: absolute;
+        top: 100%;
+        border: 6px solid transparent;
+        border-top-color: rgba(60,60,60,0.9);
+    }
+    
+    .tooltip-arrow-left::before {
+        left: 20px;
+    }
+    
+    .tooltip-arrow-center::before {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .tooltip-center-x {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .tooltip-top.tooltip-center-x.tooltip-arrow-center::before {
+        transform: translateX(-50%);
+    }
+    
+    .tooltip-arrow-right::before {
+        right: 20px;
+        left: auto;
+    }
+    
+
+    .tooltip-bottom::after {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        border: 6px solid transparent;
+        border-bottom-color: rgba(60,60,60,0.9);
+    }
+    
+    .tooltip-bottom.tooltip-arrow-center::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .tooltip-bottom.tooltip-arrow-left::after {
+        left: 20px;
+    }
+    .tooltip-bottom.tooltip-arrow-right::after {
+        right: 20px;
+        left: auto;
+    }
+
+    .tooltip-row {
+        display: flex;
+        margin-bottom: 6px;
+    }
+    .tooltip-row:last-child {
+        margin-bottom: 0;
+    }
+    .tooltip-label {
+        color: rgba(255,255,255,0.6);
+        min-width: 90px;
+        margin-right: 8px;
+    }
+    .tooltip-value {
+        color: rgba(255,255,255,0.9);
+        flex: 1;
+    }
+    
+    .app-item:hover .tooltip {
+        display: block;
+    }
+    
+
+    .dash {
+        min-width: 800px;  
+    }
+    
+    @media (max-width: 768px) {
+        .dash {
+            grid-template-columns: 1fr;  
+            gap: 12px;
+            padding: 6px;
+            min-width: 800px; 
+        }
+        
+        .card {
+            padding: 10px;
+            min-height: auto;
+        }
+        
+        .card h3 {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        
+        .chart-container {
+            min-height: 200px;
+            height: 250px; 
+            max-height: 300px;
+        }
+        
+        #pie-app-card, #bar-user-traffic-card {
+            min-height: 350px;
+        }
+        
+        #pie-app-card .chart-container, #bar-user-traffic-card .chart-container {
+            min-height: 300px;
+            height: 300px;
+        }
+        
+        .top-stats {
+            grid-template-columns: repeat(2, 1fr);  
+            gap: 8px;
+        }
+        
+        .top-stats .big {
+            font-size: 16px;
+        }
+        
+        .top-stats .top-stat-value {
+            font-size: 15px;
+        }
+        
+        .main-grid {
+            grid-template-columns: 1fr;  
+            gap: 10px;
+        }
+        
+        .sys-info-layout {
+            grid-template-columns: 1fr; 
+            gap: 15px;
+        }
+        
+        .mini {
+            padding: 12px 8px;
+            font-size: 11px;
+        }
+        
+        .kv {
+            grid-template-columns: 80px 1fr;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="dash">
+    <div>
+        <div class="top-stats">
+            <div class="mini"><div><%:Internet Status%></div><div id="internet-status" class="top-stat-value" style="font-weight:600;"></div></div>
+            <div class="mini"><div><%:Online App%></div><div id="app-count" class="top-stat-value">0</div></div>
+            <div class="mini"><div><%:Online User%></div><div id="mini-online" class="top-stat-value">0</div></div>
+            <div class="mini"><div><%:Connections%></div><div id="mini-conn" class="top-stat-value">0</div></div>
+            <div class="mini"><div><%:Today Traffic%></div><div id="mini-traffic" class="top-stat-value">0MB</div></div>
+        </div>
+
+        <div class="main-grid">
+            
+
+            <div class="card full">
+                <h3 id="traffic-title"><%:Traffic Statistics%></h3>
+                <div id="line-wan" class="chart-container"></div>
+                <div id="wan-realtime-rate" style="text-align: center; margin-top: 8px; font-size: 13px;">
+                    <span><%:Upload%>:</span><span id="wan-up-rate">0 KB/s</span> 
+                    <span style="margin-left: 15px;"><%:Download%>:</span><span id="wan-down-rate">0 KB/s</span>
+                </div>
+            </div>
+            <div class="card full" id="active-app-card">
+                <h3><%:Active Apps%></h3>
+                <div class="app-grid" id="active-apps"></div>
+    </div>
+            <div class="card" id="pie-app-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0;"><%:App Usage Distribution%></h3>
+                    <div class="app-stats-tabs" style="display:flex; gap:8px;">
+                        <button type="button" id="tab-hourly" class="tab-btn" data-type="hourly"><%:Last Hour%></button>
+                        <button type="button" id="tab-daily" class="tab-btn active" data-type="daily"><%:Today%></button>
+                    </div>
+                </div>
+                <div id="pie-app" class="chart-container"></div>
+            </div>
+            <div class="card" id="bar-user-traffic-card">
+                <h3><%:User Traffic Top8%></h3>
+                <div id="bar-user-traffic" class="chart-container"></div>
+            </div>
+
+            <div class="card list full">
+                <h3><%:Active Terminals Top8%></h3>
+                <table>
+                    <thead>
+                        <tr><th><%:Name%></th><th><%:IP%></th><th><%:Upstream Rate%></th><th><%:Downstream Rate%></th><th><%:Upstream Traffic%></th><th><%:Downstream Traffic%></th><th><%:Current App%></th><th><%:Current URL%></th></tr>
+                    </thead>
+                    <tbody id="client-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-col">
+        <div class="mini">
+            <div style="font-weight:600; margin-bottom:6px;"><%:System Info%></div>
+            <div class="kv">
+                <div><%:Hostname%></div><div id="sys-hostname">--</div>
+                <div><%:Device Model%></div><div id="sys-model">--</div>
+                <div><%:CPU%></div><div id="sys-cpu-model-name">--</div>
+                <div><%:Firmware Version%></div><div id="sys-version">--</div>
+                <div><%:Kernel Version%></div><div id="sys-kernel-version">--</div>
+                <div><%:Uptime%></div><div id="sys-uptime">--</div>
+        
+            </div>
+        </div>
+        <div class="mini">
+            <div style="font-weight:600; margin-bottom:10px;"><%:Running Status%></div>
+            
+            <svg style="position:absolute; width:0; height:0;">
+                <defs>
+                    <linearGradient id="cpuGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#16a34a;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="memGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            
+            <div style="display:flex; gap:20px; justify-content:space-around; align-items:flex-start;">
+                <div class="circular-progress cpu">
+                    <div class="circular-progress-wrapper">
+                        <svg>
+                            <circle class="progress-ring-bg" cx="42.5" cy="42.5" r="35"></circle>
+                            <circle class="progress-ring" cx="42.5" cy="42.5" r="35" id="cpu-ring"></circle>
+                        </svg>
+                        <div class="circular-progress-text" id="cpu-text">0%</div>
+                    </div>
+                    <div class="circular-progress-label">CPU</div>
+                </div>
+                <div class="circular-progress mem">
+                    <div class="circular-progress-wrapper">
+                        <svg>
+                            <circle class="progress-ring-bg" cx="42.5" cy="42.5" r="35"></circle>
+                            <circle class="progress-ring" cx="42.5" cy="42.5" r="35" id="mem-ring"></circle>
+                        </svg>
+                        <div class="circular-progress-text" id="mem-text">0%</div>
+                    </div>
+                    <div class="circular-progress-label"><%:Memory%></div>
+                </div>
+            </div>
+        </div>
+        <div class="mini" style="position:relative;">
+            <div style="font-weight:600; margin-bottom:6px; position:relative; cursor:help;" id="network-title"><%:Network%></div>
+            <div id="network-tooltip" class="tooltip tooltip-top tooltip-arrow-left" style="display:none;"></div>
+            <div class="kv" id="network-info">
+                <div id="gw-mode-lan-ip-label">LAN IP</div><div id="gw-mode-lan-ip-value">192.168.1.1</div>
+                <div id="gw-mode-lan-ipv6-label" style="display:none;">LAN IPv6</div><div id="gw-mode-lan-ipv6-value" style="display:none;">-</div>
+                <div id="gw-mode-wan-ip-label">WAN IP</div><div id="gw-mode-wan-ip-value">100.64.1.23</div>
+                <div id="gw-mode-wan-ipv6-label" style="display:none;">WAN IPv6</div><div id="gw-mode-wan-ipv6-value" style="display:none;">-</div>
+                <div id="gw-mode-gateway-label"><%:Gateway%></div><div id="gw-mode-gateway-value">100.64.1.1</div>
+                <div id="gw-mode-dns-label"><%:DNS%></div><div id="gw-mode-dns-value">223.5.5.5 / 8.8.8.8</div>
+                <div id="bypass-mode-ip-label" style="display:none;">IP</div><div id="bypass-mode-ip-value" style="display:none;">192.168.1.1</div>
+                <div id="bypass-mode-ipv6-label" style="display:none;">IPv6</div><div id="bypass-mode-ipv6-value" style="display:none;">-</div>
+                <div id="bypass-mode-mask-label" style="display:none;"><%:Mask%></div><div id="bypass-mode-mask-value" style="display:none;">255.255.255.0</div>
+                <div id="bypass-mode-gateway-label" style="display:none;"><%:Gateway%></div><div id="bypass-mode-gateway-value" style="display:none;">192.168.1.1</div>
+                <div id="bypass-mode-dns-label" style="display:none;"><%:DNS%></div><div id="bypass-mode-dns-value" style="display:none;">223.5.5.5 / 8.8.8.8</div>
+            </div>
+        </div>
+        <div class="mini">
+            <div style="font-weight:600; margin-bottom:6px;"><%:Temperature%></div>
+            <div id="cpu-temp-container" style="margin-bottom:8px; display:none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                    <span>CPU</span>
+                    <span id="cpu-temp-text">0°C</span>
+                </div>
+                <div class="meter">
+                    <div id="cpu-temp-bar" class="bar" style="background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+                </div>
+            </div>
+            <div id="wifi-temp-container" style="display:none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                    <span>WiFi</span>
+                    <span id="wifi-temp-text">0°C</span>
+                </div>
+                <div class="meter">
+                    <div id="wifi-temp-bar" class="bar" style="background:linear-gradient(90deg,#f59e0b,#ef4444);"></div>
+                </div>
+            </div>
+        </div>
+        <div class="mini">
+            <div style="font-weight:600; margin-bottom:6px;"><%:Storage Space%></div>
+            <div style="margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                    <span><%:Temp Space%></span>
+                    <span id="storage-tmp-text">0%</span>
+                </div>
+                <div class="meter"><div id="storage-tmp-bar" class="bar" style="background:linear-gradient(90deg,#a78bfa,#8b5cf6);"></div></div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                    <span><%:Disk Space%></span>
+                    <span id="storage-root-text">0%</span>
+                </div>
+                <div class="meter"><div id="storage-root-bar" class="bar" style="background:linear-gradient(90deg,#a78bfa,#8b5cf6);"></div></div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+                    <span><%:Boot Space%></span>
+                    <span id="storage-boot-text">0%</span>
+                </div>
+                <div class="meter"><div id="storage-boot-bar" class="bar" style="background:linear-gradient(90deg,#a78bfa,#8b5cf6);"></div></div>
+            </div>
+        </div>
+        <div class="card" id="active-url-card">
+            <h3><%:Active URL%></h3>
+            <div id="active-url-list" class="active-url-list"></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">//<![CDATA[
+    (function() {
+        try {
+            localStorage.setItem('luci-menu-category', 'basic');
+            console.log('Dashboard: Force set menu category to basic');
+        } catch(e) {
+            console.error('Dashboard: Failed to set menu category:', e);
+        }
+    })();
+    
+    var _InternetStatus = '<%:Internet Status%>';
+    var _Connected = '<%:Connected%>';
+    var _Disconnected = '<%:Disconnected%>';
+    var _NoCable = '<%:No Cable%>';
+    var _DialFailed = '<%:Dial Failed%>';
+    var _Unknown = '<%:Unknown%>';
+    var _OnlineApp = '<%:Online App%>';
+    var _OnlineUser = '<%:Online User%>';
+    var _Connections = '<%:Connections%>';
+    var _TodayTraffic = '<%:Today Traffic%>';
+    var _TrafficStatistics = '<%:Traffic Statistics%>';
+    var _Upload = '<%:Upload%>';
+    var _Download = '<%:Download%>';
+    var _ActiveApps = '<%:Active Apps%>';
+    var _AppUsageDistribution = '<%:App Usage Distribution%>';
+    var _LastHour = '<%:Last Hour%>';
+    var _Today = '<%:Today%>';
+    var _UserTrafficTop8 = '<%:User Traffic Top8%>';
+    var _ActiveTerminalsTop8 = '<%:Active Terminals Top8%>';
+    var _Name = '<%:Name%>';
+    var _IP = '<%:IP%>';
+    var _UpstreamRate = '<%:Upstream Rate%>';
+    var _DownstreamRate = '<%:Downstream Rate%>';
+    var _UpstreamTraffic = '<%:Upstream Traffic%>';
+    var _DownstreamTraffic = '<%:Downstream Traffic%>';
+    var _CurrentApp = '<%:Current App%>';
+    var _CurrentURL = '<%:Current URL%>';
+    var _SystemInfo = '<%:System Info%>';
+    var _Hostname = '<%:Hostname%>';
+    var _DeviceModel = '<%:Device Model%>';
+    var _CPU = '<%:CPU%>';
+    var _FirmwareVersion = '<%:Firmware Version%>';
+    var _KernelVersion = '<%:Kernel Version%>';
+    var _Uptime = '<%:Uptime%>';
+    var _RunningStatus = '<%:Running Status%>';
+    var _Memory = '<%:Memory%>';
+    var _Network = '<%:Network%>';
+    var _Gateway = '<%:Gateway%>';
+    var _DNS = '<%:DNS%>';
+    var _Mask = '<%:Mask%>';
+    var _Temperature = '<%:Temperature%>';
+    var _TempSpace = '<%:Temp Space%>';
+    var _DiskSpace = '<%:Disk Space%>';
+    var _BootSpace = '<%:Boot Space%>';
+    var _ActiveURL = '<%:Active URL%>';
+    var _NoData = '<%:No Data%>';
+    var _Total = '<%:Total%>';
+    var _Day = '<%:Day%>';
+    var _Hour = '<%:Hour%>';
+    var _Minute = '<%:Minute%>';
+    var _Upstream = '<%:Upstream%>';
+    var _Downstream = '<%:Downstream%>';
+    var _AppID = '<%:App ID%>';
+    var _AccessTime = '<%:Access Time%>';
+    var _MACAddress = '<%:MAC Address%>';
+    var _SourceIP = '<%:Source IP%>';
+    var _DestinationIP = '<%:Destination IP%>';
+    var _Protocol = '<%:Protocol%>';
+    var _SourcePort = '<%:Source Port%>';
+    var _DestinationPort = '<%:Destination Port%>';
+    var _MatchedDomain = '<%:Matched Domain%>';
+    var _IPAddress = '<%:IP Address%>';
+    
+    function pct(v){ return Math.max(0, Math.min(100, Math.round(v))); }
+
+    function setBar(id, txt, val){
+        var $bar = $('#' + id);
+        var p = pct(val);
+        $bar.css('width', p + "%");
+        if(txt && txt.length > 0) {
+            var $t = $('#' + txt);
+            $t.text(p + "%");
+        }
+    }
+    
+    function setCircularProgress(ringId, textId, val){
+        var $ring = $('#' + ringId);
+        var $text = $('#' + textId);
+        var p = pct(val);
+        
+        var radius = 35;
+        var circumference = 2 * Math.PI * radius;
+        
+        var offset = circumference - (p / 100) * circumference;
+        $ring.css({
+            'stroke-dasharray': circumference,
+            'stroke-dashoffset': offset
+        });
+        
+        $text.text(p + "%");
+    }
+    
+    function formatMemory(memKB) {
+        var memMB = memKB / 1024;
+        if(memMB >= 1024) {
+            return (memMB / 1024).toFixed(2) + 'GB';
+        } else {
+            return Math.round(memMB) + 'MB';
+        }
+    }
+    
+    function formatStorage(kb) {
+        var mb = kb / 1024;
+        if(mb >= 1024) {
+            return (mb / 1024).toFixed(2) + 'GB';
+        } else {
+            return Math.round(mb) + 'MB';
+        }
+    }
+    
+    function setMemCircularProgress(ringId, textId, val, totalKB){
+        var $ring = $('#' + ringId);
+        var $text = $('#' + textId);
+        var p = pct(val);
+        
+        var radius = 35;
+        var circumference = 2 * Math.PI * radius;
+        
+        var offset = circumference - (p / 100) * circumference;
+        $ring.css({
+            'stroke-dasharray': circumference,
+            'stroke-dashoffset': offset
+        });
+        
+        var usedKB = Math.round((p / 100) * totalKB);
+        $text.text(formatMemory(usedKB));
+    }
+
+    function randomWalk(cur, step){
+        var n = cur + (Math.random() - 0.5) * step;
+        return Math.max(0, n);
+    }
+
+    function fetchDashboardCommon(){
+        new XHR().get('<%=url("admin/dashboard_api/get_dashboard_common")%>', null, function(x, data){
+            if(data){
+                try {
+                    var json = typeof data === 'string' ? JSON.parse(data) : data;
+                    updateDashboardData(json);
+                } catch(e) {
+                    console.error('Failed to parse dashboard data:', e);
+                }
+            }
+        });
+    }
+    
+    function fetchDashboardData(){
+        if(isRenderingHosts) {
+            return;
+        }
+        
+        new XHR().get('<%=url("admin/dashboard_api/get_daily_top_users")%>', null, function(x, data){
+            if(data){
+                try {
+                    var json = typeof data === 'string' ? JSON.parse(data) : data;
+                    updateUserTrafficChart(json);
+                } catch(e) {
+                    console.error('Failed to parse user traffic data:', e);
+                }
+            }
+        });
+        
+        new XHR().get('<%=url("admin/dashboard_api/get_active_users")%>?count=10', null, function(x, data){
+            if(data){
+                try {
+                    var json = typeof data === 'string' ? JSON.parse(data) : data;
+                    if(json && json.users && Array.isArray(json.users)) {
+                        activeUsersData = json.users;
+                        renderClientList();
+                    } else {
+                        activeUsersData = [];
+                        renderClientList();
+                    }
+                } catch(e) {
+                    console.error('Failed to parse active users data:', e);
+                    activeUsersData = [];
+                    renderClientList();
+                }
+            } else {
+                activeUsersData = [];
+                renderClientList();
+            }
+        });
+    }
+    
+    function isEmptyValue(value) {
+        return value === undefined || value === null || value === '' || value === '0.0.0.0';
+    }
+    
+    function formatEmptyValue(value, defaultValue) {
+        defaultValue = defaultValue || '--';
+        return isEmptyValue(value) ? defaultValue : value;
+    }
+    
+    function updateDashboardData(data){
+        var sys = data.system_status || {};
+        var net = data.network_status || {};
+        var apps = data.active_app || {};
+        var hosts = data.active_host || {};
+        var traffic = data.interface_traffic || {};
+        
+        if(sys.hostname) {
+            $('#sys-hostname').text(sys.hostname);
+        }
+        if(sys.model) {
+            $('#sys-model').text(sys.model).attr('title', sys.model);
+        }
+        var versionStr = '';
+        if(sys.openwrt_version && sys.hos_version) {
+            versionStr = sys.openwrt_version + '-' + sys.hos_version;
+        } else if(sys.openwrt_version) {
+            versionStr = sys.openwrt_version;
+        } else if(sys.hos_version) {
+            versionStr = sys.hos_version;
+        } else {
+            versionStr = '--';
+        }
+        $('#sys-version').text(versionStr);
+        if(sys.kernel_version) {
+            $('#sys-kernel-version').text(sys.kernel_version);
+        }
+        if(sys.cpu_model_name) {
+            $('#sys-cpu-model-name').text(sys.cpu_model_name).attr('title', sys.cpu_model_name);
+        }
+  
+        if(sys.uptime) {
+            var uptimeStr = formatUptime(sys.uptime);
+            $('#sys-uptime').text(uptimeStr);
+        }
+        
+        if(sys.total_mem !== undefined) {
+            $('#sys-mem-total').text(formatMemory(sys.total_mem));
+        }
+        
+        if(sys.connections !== undefined) {
+            $('#sys-connections').text(sys.connections);
+            $('#mini-conn').text(sys.connections);
+        }
+        
+        if(sys.client_num !== undefined) {
+            $('#sys-client-num').text(sys.client_num);
+            $('#mini-online').text(sys.client_num);
+        }
+        
+        if(sys.storage) {
+            var storage = sys.storage;
+            if(storage.tmp && storage.tmp.total_kb !== undefined && storage.tmp.used_kb !== undefined) {
+                var tmpTotal = parseInt(storage.tmp.total_kb) || 0;
+                var tmpUsed = parseInt(storage.tmp.used_kb) || 0;
+                var tmpPercent = tmpTotal > 0 ? Math.round((tmpUsed / tmpTotal) * 100) : 0;
+                var tmpText = formatStorage(tmpUsed) + '/' + formatStorage(tmpTotal) + ' (' + tmpPercent + '%)';
+                $('#storage-tmp-text').text(tmpText);
+                setBar('storage-tmp-bar', '', tmpPercent);
+            }
+            if(storage.root && storage.root.total_kb !== undefined && storage.root.used_kb !== undefined) {
+                var rootTotal = parseInt(storage.root.total_kb) || 0;
+                var rootUsed = parseInt(storage.root.used_kb) || 0;
+                var rootPercent = rootTotal > 0 ? Math.round((rootUsed / rootTotal) * 100) : 0;
+                var rootText = formatStorage(rootUsed) + '/' + formatStorage(rootTotal) + ' (' + rootPercent + '%)';
+                $('#storage-root-text').text(rootText);
+                setBar('storage-root-bar', '', rootPercent);
+            }
+            if(storage.boot && storage.boot.total_kb !== undefined && storage.boot.used_kb !== undefined) {
+                var bootTotal = parseInt(storage.boot.total_kb) || 0;
+                var bootUsed = parseInt(storage.boot.used_kb) || 0;
+                var bootPercent = bootTotal > 0 ? Math.round((bootUsed / bootTotal) * 100) : 0;
+                var bootText = formatStorage(bootUsed) + '/' + formatStorage(bootTotal) + ' (' + bootPercent + '%)';
+                $('#storage-boot-text').text(bootText);
+                setBar('storage-boot-bar', '', bootPercent);
+            }
+        }
+        
+        if(sys.flow) {
+            var todayUp = parseInt(sys.flow.today_up) || 0; // KB
+            var todayDown = parseInt(sys.flow.today_down) || 0; // KB
+            var totalFlowKB = todayUp + todayDown;
+            $('#mini-traffic').text(formatMemory(totalFlowKB));
+        }
+        
+        if(sys.cpu !== undefined){
+            var cpuVal = parseFloat(sys.cpu) || 0;
+            setCircularProgress('cpu-ring','cpu-text',cpuVal);
+        }
+        if(sys.total_mem !== undefined && sys.used_mem !== undefined){
+            var memTotal = parseInt(sys.total_mem) || 256;
+            var memUsed = parseInt(sys.used_mem) || 0;
+            var memPercent = memTotal > 0 ? (memUsed / memTotal * 100) : 0;
+            setMemCircularProgress('mem-ring','mem-text',memPercent, memTotal);
+        }
+        
+        var $tempCard = $('.mini').filter(function() {
+            return $(this).find('#cpu-temp-container, #wifi-temp-container').length > 0;
+        }).first();
+        var hasCpuTemp = sys.cpu_temp !== undefined && sys.cpu_temp > 0;
+        var hasWifiTemp = sys.wifi_temp !== undefined && sys.wifi_temp > 0;
+        
+        if (!hasCpuTemp && !hasWifiTemp) {
+            if ($tempCard.length) {
+                $tempCard.hide();
+            }
+        } else {
+            if ($tempCard.length) {
+                $tempCard.show();
+            }
+            
+            if (hasCpuTemp) {
+                var $cpuTempContainer = $('#cpu-temp-container');
+                var $cpuTempText = $('#cpu-temp-text');
+                var $cpuTempBar = $('#cpu-temp-bar');
+                if($cpuTempContainer.length && $cpuTempText.length && $cpuTempBar.length){
+                    $cpuTempContainer.show();
+                    var cpuTempVal = Math.round(sys.cpu_temp);
+                    $cpuTempText.text(cpuTempVal + '°C');
+                    var cpuTempWidth = Math.min(100, Math.max(0, cpuTempVal));
+                    $cpuTempBar.css('width', cpuTempWidth + '%');
+                }
+            } else {
+                $('#cpu-temp-container').hide();
+            }
+            
+            if (hasWifiTemp) {
+                var $wifiTempContainer = $('#wifi-temp-container');
+                var $wifiTempText = $('#wifi-temp-text');
+                var $wifiTempBar = $('#wifi-temp-bar');
+                if($wifiTempContainer.length && $wifiTempText.length && $wifiTempBar.length){
+                    $wifiTempContainer.show();
+                    var wifiTempVal = Math.round(sys.wifi_temp);
+                    $wifiTempText.text(wifiTempVal + '°C');
+                    var wifiTempWidth = Math.min(100, Math.max(0, wifiTempVal));
+                    $wifiTempBar.css('width', wifiTempWidth + '%');
+                }
+            } else {
+                $('#wifi-temp-container').hide();
+            }
+        }
+        
+        var lanDns = '';
+        if (net.lan && net.lan.dns) {
+            if (Array.isArray(net.lan.dns)) {
+                lanDns = net.lan.dns.filter(function(d) { return d && d !== ''; }).join(' / ');
+            } else if (typeof net.lan.dns === 'string') {
+                lanDns = net.lan.dns;
+            }
+        }
+        
+        var wanDns = '';
+        if (net.wan && net.wan.dns) {
+            if (Array.isArray(net.wan.dns)) {
+                wanDns = net.wan.dns.filter(function(d) { return d && d !== ''; }).join(' / ');
+            } else if (typeof net.wan.dns === 'string') {
+                wanDns = net.wan.dns;
+            }
+        }
+        
+        var wanGateway = (net.wan && net.wan.gateway) ? net.wan.gateway : '';
+        var lanGateway = (net.lan && net.lan.gateway) ? net.lan.gateway : '';
+        
+        var isGatewayMode = (net.wan && net.wan.ip && net.wan.ip !== '0.0.0.0' && net.wan.ip !== '');
+        
+        var networkData = {
+            work_mode: (net.work_mode !== undefined && net.work_mode !== null) ? net.work_mode : 1,
+            internet: net.internet !== undefined ? net.internet : 1,
+            isGatewayMode: isGatewayMode,  
+            lan: {
+                ip: net.lan && net.lan.ip || '0.0.0.0',
+                mask: net.lan && net.lan.mask || '255.255.255.0',
+                gateway: lanGateway,
+                dns: lanDns
+            },
+            wan: {
+                ip: net.wan && net.wan.ip || '0.0.0.0',
+                mask: net.wan && net.wan.mask || '255.255.255.0',
+                gateway: wanGateway,
+                dns: wanDns
+            }
+        };
+        updateNetworkInfo(networkData);
+        
+        if(net.internet !== undefined) {
+            var $internetStatusEl = $('#internet-status');
+            if($internetStatusEl.length) {
+                var statusText = '';
+                var statusColor = '';
+                switch(net.internet) {
+                    case 0:
+                        statusText = _Connected;
+                        statusColor = '#22c55e'; 
+                        break;
+                    case 1:
+                        statusText = _Disconnected;
+                        statusColor = '#ef4444'; 
+                        break;
+                    case 2:
+                        statusText = _NoCable;
+                        statusColor = '#f59e0b'; 
+                        break;
+                    case 3:
+                        statusText = _DialFailed;
+                        statusColor = '#ef4444'; 
+                        break;
+                    default:
+                        statusText = _Unknown;
+                        statusColor = '#6b7280'; 
+                }
+                $internetStatusEl.text(statusText).css({
+                    'color': statusColor,
+                    'font-weight': '400'  
+                });
+            }
+        }
+        
+        var appList = apps.list;
+        if(!Array.isArray(appList)) {
+            appList = [];
+        }
+        updateActiveApps(appList);
+        
+        if(apps.total !== undefined){
+            $('#app-count').text(apps.total);
+        } else {
+            $('#app-count').text('0');
+        }
+        
+        if(traffic.interface && traffic.traffic){
+            updateInterfaceTraffic(traffic);
+        }
+        
+        updateActiveHosts(hosts.list || []);
+    }
+    
+    function formatUptime(seconds){
+        var days = Math.floor(seconds / 86400);
+        var hours = Math.floor((seconds % 86400) / 3600);
+        var minutes = Math.floor((seconds % 3600) / 60);
+        var secs = seconds % 60;
+        var result = [];
+        if(days > 0) result.push(days + 'd');
+        if(hours > 0) result.push(hours + 'h');
+        if(minutes > 0) result.push(minutes + 'm');
+        result.push(secs + 's');
+        return result.length > 0 ? result.join(' ') : '0s';
+    }
+    
+    var cpu=18, mem=42;
+    var memTotalMB = 512; 
+    
+    setCircularProgress('cpu-ring','cpu-text',cpu);
+    setMemCircularProgress('mem-ring','mem-text',mem, memTotalMB);
+    
+    setBar('storage-tmp-bar','storage-tmp-text',0);
+    setBar('storage-root-bar','storage-root-text',0);
+    setBar('storage-boot-bar','storage-boot-text',0);
+    
+    var pieApp = echarts.init($('#pie-app')[0]);
+    var lineWan = echarts.init($('#line-wan')[0]);
+    var barUserTraffic = echarts.init($('#bar-user-traffic')[0]);
+
+
+    function getCSSVariable(name, defaultValue) {
+        var root = document.documentElement;
+        var value = getComputedStyle(root).getPropertyValue(name).trim();
+        return value || defaultValue;
+    }
+    
+    var darkText = getCSSVariable('--chart-text-color', '#333333');
+    var axisLineColor = getCSSVariable('--chart-axis-line-color', 'rgba(0,0,0,0.2)');
+    var axisLabelColor = getCSSVariable('--chart-axis-label-color', '#666666');
+    var splitLineColor = getCSSVariable('--chart-split-line-color', 'rgba(0,0,0,0.08)');
+    var splitLineDashedColor = getCSSVariable('--chart-split-line-dashed-color', 'rgba(0,0,0,0.15)');
+    var tooltipBg = getCSSVariable('--chart-tooltip-bg', 'rgba(255,255,255,0.95)');
+    var tooltipText = getCSSVariable('--chart-tooltip-text', '#333333');
+    
+    var axis = { 
+        lineStyle:{color:axisLineColor}, 
+        axisLabel:{color:axisLabelColor}, 
+        axisLine:{lineStyle:{color:axisLineColor}}, 
+        splitLine:{lineStyle:{color:splitLineColor}} 
+    };
+    var palette = [
+    '#34d399',  
+        '#a78bfa',  // violet-400 
+        '#60a5fa',  // blue-400
+        '#fb923c',  // orange-400 
+        '#fbbf24',  // amber-400 
+		'#60a5fa',  // blue-400 
+        '#fbbf24',  // amber-400 
+        '#34d399',  // emerald-400
+        '#06b6d4',  // cyan-500 
+        '#3b82f6',  // blue-500 
+        '#8b5cf6',  // violet-500 
+        '#f59e0b',  // amber-500
+        '#10b981'   // emerald-500 
+    ];
+    
+    var currentAppStatsType = 'daily';
+    
+    var appStatsData = {
+        hourly: null,
+        daily: null
+    };
+    
+    pieApp.setOption({
+        backgroundColor: 'transparent',
+        color: palette,
+        textStyle:{ color: axisLabelColor },
+        tooltip:{
+            trigger:'item', 
+            backgroundColor: tooltipBg,
+            textStyle: { color: tooltipText },
+            formatter: function(params) {
+                var name = params.name || '未知';
+                var value = params.value || 0;
+                var percent = params.percent || 0;
+                var hours = Math.floor(value / 3600);
+                var minutes = Math.floor((value % 3600) / 60);
+                var timeStr = '';
+                if (hours > 0) {
+                    timeStr = hours + '小时' + (minutes > 0 ? minutes + '分钟' : '');
+                } else {
+                    timeStr = minutes + '分钟';
+                }
+                return name + '<br/>' + timeStr + ' (' + percent.toFixed(1) + '%)';
+            }
+        },
+        legend:{bottom:0, textStyle:{color:axisLabelColor}},
+        grid: {
+            top: '5%', 
+            bottom: '10%'
+        },
+        series:[{ 
+            type:'pie', 
+            radius:['50%','65%'], 
+            center: ['50%', '45%'], 
+            data:[] 
+        }]
+    });
+    
+    function updateAppTypeStatsChart(data) {
+        if (!data) {
+            pieApp.setOption({
+                series: [{
+                    data: []
+                }]
+            });
+            return;
+        }
+        
+        var typesArray = [];
+        if (Array.isArray(data.types)) {
+            typesArray = data.types;
+        } else if (data.types && typeof data.types === 'object') {
+            typesArray = Object.keys(data.types).map(function(key) {
+                return data.types[key];
+            });
+        }
+        
+        var chartData = typesArray.map(function(item) {
+            return {
+                name: item.name || ('分类' + item.app_type),
+                value: item.total_time || 0
+            };
+        });
+        
+        pieApp.setOption({
+            series: [{
+                data: chartData
+            }]
+        });
+    }
+    
+
+    function fetchAppTypeStats(type) {
+        type = type || 'hourly';
+        
+
+        if (appStatsData[type]) {
+            updateAppTypeStatsChart(appStatsData[type]);
+            return;
+        }
+        
+        var url = '<%=url("admin/dashboard_api/get_app_type_stats")%>?type=' + type;
+        new XHR().get(url, null, function(x, data) {
+            if (data) {
+                try {
+                    var json = typeof data === 'string' ? JSON.parse(data) : data;
+                    appStatsData[type] = json;
+                    if (currentAppStatsType === type) {
+                        updateAppTypeStatsChart(json);
+                    }
+                } catch(e) {
+                    console.error('Failed to parse app type stats data:', e);
+                }
+            }
+        });
+    }
+    
+    function fetchAllAppTypeStats() {
+        ['hourly', 'daily'].forEach(function(type) {
+            var url = '<%=url("admin/dashboard_api/get_app_type_stats")%>?type=' + type;
+            new XHR().get(url, null, function(x, data) {
+                if (data) {
+                    try {
+                        var json = typeof data === 'string' ? JSON.parse(data) : data;
+                        appStatsData[type] = json;
+                        if (currentAppStatsType === type) {
+                            updateAppTypeStatsChart(json);
+                        }
+                    } catch(e) {
+                        console.error('Failed to parse app type stats data:', e);
+                    }
+                }
+            });
+        });
+    }
+    
+    $('.tab-btn').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var $btn = $(this);
+        var type = $btn.data('type');
+        
+        if ($btn.hasClass('active')) {
+            return;
+        }
+        
+        $('.tab-btn').removeClass('active');
+        $btn.addClass('active');
+        
+        currentAppStatsType = type;
+        
+        if (appStatsData[type]) {
+            updateAppTypeStatsChart(appStatsData[type]);
+        } else {
+            fetchAppTypeStats(type);
+        }
+    });
+    
+
+    fetchDashboardCommon();
+    fetchDashboardData();
+    fetchAllAppTypeStats();
+ 
+    setInterval(function(){
+        fetchDashboardCommon();
+    }, 3000);
+
+    setTimeout(function(){
+        setInterval(function(){
+            fetchDashboardData();
+            fetchAllAppTypeStats();
+        }, 3000);
+    }, 1500);
+
+    barUserTraffic.setOption({
+        backgroundColor: 'transparent',
+        color: ['#60a5fa', '#10b981'], 
+        textStyle: { color: axisLabelColor },
+        tooltip: {
+            trigger: 'item', 
+            axisPointer: { type: 'shadow' },
+            backgroundColor: tooltipBg,
+            textStyle: { color: tooltipText }, 
+            formatter: function(params) {
+                if (params.seriesName !== '下行') {
+                    return '';
+                }
+                var user = params.data.user;
+                if (!user) {
+                    return '';
+                }
+                var nameInfo = formatUserDisplayName(user);
+                var displayName = nameInfo.display;
+                var fullName = nameInfo.full;
+                var upStr = formatTraffic(user.up_bytes);
+                var downStr = formatTraffic(user.down_bytes);
+                var totalStr = formatTraffic(user.total_bytes);
+                return displayName + '<br/>' +
+                       'MAC: ' + (user.mac || '') + '<br/>' +
+                       _IP + ': ' + user.ip + '<br/>' +
+                       '<span style="color:#60a5fa;">●</span> ' + _Upstream + ': ' + upStr + '<br/>' +
+                       '<span style="color:#10b981;">●</span> ' + _Downstream + ': ' + downStr + '<br/>' +
+                       _Total + ': ' + totalStr;
+            },
+            confine: true 
+        },
+        legend: {
+            show: true,
+            bottom: 0,
+            textStyle: { color: axisLabelColor },
+            data: [_Upstream, _Downstream]
+        },
+        grid: {
+            left: '8%',  
+            right: '10%',  
+            top: '2%',  
+            bottom: '12%',  
+            containLabel: false
+        },
+        xAxis: {
+            type: 'value',
+            position: 'bottom',
+            min: 0,  
+            axisLabel: {
+                color: axisLabelColor,
+                fontSize: 10,
+                formatter: function(value) {
+                    return formatTraffic(value);
+                }
+            },
+            axisLine: {
+                show: true,
+                lineStyle: { color: axisLineColor } 
+            },
+            splitLine: {
+                show: false  
+            },
+            splitNumber: 6  
+        },
+        yAxis: [
+            {
+                type: 'category',
+                position: 'left',
+                boundaryGap: false,  
+                axisLabel: {
+                    color: axisLabelColor,
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    formatter: function(value, index) {
+                        return (index + 1).toString();
+                    }
+                },
+                axisLine: {
+                    show: true,
+                    lineStyle: { color: axisLineColor } 
+                },
+                splitLine: {
+                    show: false  
+                },
+                data: []
+            },
+            {
+                type: 'category',
+                position: 'right',
+                axisLabel: {
+                    show: false  
+                },
+                axisLine: {
+                    show: false
+                },
+                splitLine: {
+                    show: false
+                },
+                data: []
+            }
+        ],
+        series: [
+            {
+                name: _Upstream,
+                type: 'bar',
+                stack: 'traffic', 
+                data: [],
+                barWidth: 25,
+                barCategoryGap: '50%',
+                label: {
+                    show: false  
+                }
+            },
+            {
+                name: _Downstream,
+                type: 'bar',
+                stack: 'traffic', 
+                data: [],
+                barWidth: 25,
+                barCategoryGap: '50%',
+                label: {
+                    show: true, 
+                    position: 'right',  
+                    color: axisLabelColor,
+                    fontSize: 11,
+                    formatter: function(params) {
+                        if (params.seriesName === _Downstream) {
+                            if (params.data.user) {
+                                var nameInfo = formatUserDisplayName(params.data.user);
+                                var displayName = nameInfo.display;
+                                var totalBytes = (params.data.user.up_bytes || 0) + (params.data.user.down_bytes || 0);
+                                var totalTraffic = formatTraffic(totalBytes);
+                                return displayName + '(' + totalTraffic + ')';
+                            }
+                        }
+                        return '';
+                    },
+                    distance: 5 
+                }
+            }
+        ]
+    });
+
+    var clientData = [];
+ 
+    var networkData = {
+        work_mode: 1, 
+        lan: {ip: '', mask: '', dns: ''},
+        wan: {ip: '', mask: '', dns: '', gateway: ''}
+    };
+    
+    function updateNetworkInfo(data){
+        if(data){
+            networkData = data;
+        }
+        renderNetworkInfo();
+    }
+    
+    function renderNetworkInfo(){
+        var lan = networkData.lan || {};
+        var wan = networkData.wan || {};
+        var isGatewayMode = networkData.isGatewayMode !== undefined ? networkData.isGatewayMode : (wan && wan.ip && wan.ip !== '0.0.0.0' && wan.ip !== '');
+        
+        if(isGatewayMode){
+            $('#gw-mode-lan-ip-label, #gw-mode-lan-ip-value, #gw-mode-wan-ip-label, #gw-mode-wan-ip-value, #gw-mode-gateway-label, #gw-mode-gateway-value, #gw-mode-dns-label, #gw-mode-dns-value').show();
+            $('#bypass-mode-ip-label, #bypass-mode-ip-value, #bypass-mode-mask-label, #bypass-mode-mask-value, #bypass-mode-gateway-label, #bypass-mode-gateway-value, #bypass-mode-dns-label, #bypass-mode-dns-value').hide();
+            
+            $('#gw-mode-lan-ip-value').text(lan.ip || '');
+            $('#gw-mode-wan-ip-value').text(wan.ip || '');
+            $('#gw-mode-gateway-value').text(formatEmptyValue(wan.gateway));
+            $('#gw-mode-dns-value').text(formatEmptyValue(wan.dns));
+        } else {
+            $('#gw-mode-lan-ip-label, #gw-mode-lan-ip-value, #gw-mode-wan-ip-label, #gw-mode-wan-ip-value, #gw-mode-gateway-label, #gw-mode-gateway-value, #gw-mode-dns-label, #gw-mode-dns-value').hide();
+            $('#bypass-mode-ip-label, #bypass-mode-ip-value, #bypass-mode-mask-label, #bypass-mode-mask-value, #bypass-mode-gateway-label, #bypass-mode-gateway-value, #bypass-mode-dns-label, #bypass-mode-dns-value').show();
+            $('#bypass-mode-ip-value').text(lan.ip || '');
+            $('#bypass-mode-mask-value').text(lan.mask || '');
+            $('#bypass-mode-gateway-value').text(formatEmptyValue(lan.gateway));
+            $('#bypass-mode-dns-value').text(formatEmptyValue(lan.dns));
+        }
+        
+        updateNetworkTooltip();
+    }
+    
+    function updateNetworkTooltip(){
+        var $tooltip = $('#network-tooltip');
+        var lan = networkData.lan || {};
+        var wan = networkData.wan || {};
+        
+        var isGatewayMode = networkData.isGatewayMode !== undefined ? networkData.isGatewayMode : (wan && wan.ip && wan.ip !== '0.0.0.0' && wan.ip !== '');
+        
+        if(isGatewayMode){
+            var html = '<div class="tooltip-row"><span class="tooltip-label" style="font-weight:600;">LAN:</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _IPAddress + ':</span><span class="tooltip-value">'+(lan.ip||'')+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _Mask + ':</span><span class="tooltip-value">'+(lan.mask||'')+'</span></div>' +
+                       '<div class="tooltip-row" style="margin-top:8px;"><span class="tooltip-label" style="font-weight:600;">WAN:</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _IPAddress + ':</span><span class="tooltip-value">'+(wan.ip||'')+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _Mask + ':</span><span class="tooltip-value">'+(wan.mask||'')+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _Gateway + ':</span><span class="tooltip-value">'+formatEmptyValue(wan.gateway)+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _DNS + ':</span><span class="tooltip-value">'+formatEmptyValue(wan.dns)+'</span></div>';
+            $tooltip.html(html);
+        } else {
+            var html = '<div class="tooltip-row"><span class="tooltip-label" style="font-weight:600;">LAN:</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _IPAddress + ':</span><span class="tooltip-value">'+(lan.ip||'')+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _Mask + ':</span><span class="tooltip-value">'+(lan.mask||'')+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _Gateway + ':</span><span class="tooltip-value">'+formatEmptyValue(lan.gateway)+'</span></div>' +
+                       '<div class="tooltip-row"><span class="tooltip-label">' + _DNS + ':</span><span class="tooltip-value">'+formatEmptyValue(lan.dns)+'</span></div>';
+            $tooltip.html(html);
+        }
+    }
+    
+
+    setTimeout(function(){
+        var $networkTitle = $('#network-title');
+        if($networkTitle.length){
+            $networkTitle.on('mouseenter', function(){
+                $('#network-tooltip').show();
+            }).on('mouseleave', function(){
+                $('#network-tooltip').hide();
+            });
+        }
+    }, 100);
+
+    var currentInterface = '';
+
+    function calculateYAxisInterval(max) {
+        var KB = 1024;
+        var MB = 1024 * 1024;
+        var intervals = [
+            10 * KB,    // 10KB
+            20 * KB,    // 20KB
+            30 * KB,    // 30KB
+            40 * KB,    // 40KB
+            50 * KB,    // 50KB
+            60 * KB,    // 60KB
+            80 * KB,    // 80KB
+            100 * KB,   // 100KB
+            150 * KB,   // 150KB
+            200 * KB,   // 200KB
+            250 * KB,   // 250KB
+            300 * KB,   // 300KB
+            400 * KB,   // 400KB
+            500 * KB,   // 500KB
+            600 * KB,   // 600KB
+            800 * KB,   // 800KB
+            1 * MB,     // 1MB
+            1.5 * MB,   // 1.5MB
+            2 * MB,     // 2MB
+            2.5 * MB,   // 2.5MB
+            3 * MB,     // 3MB
+            4 * MB,     // 4MB
+            5 * MB,     // 5MB
+            6 * MB,     // 6MB
+            8 * MB,     // 8MB
+            10 * MB,    // 10MB
+            15 * MB,    // 15MB
+            20 * MB,    // 20MB
+            25 * MB,    // 25MB
+            30 * MB,    // 30MB
+            40 * MB,    // 40MB
+            50 * MB,    // 50MB
+            60 * MB,    // 60MB
+            80 * MB,    // 80MB
+            100 * MB,   // 100MB
+            150 * MB,   // 150MB
+            200 * MB,   // 200MB
+            250 * MB,   // 250MB
+            300 * MB,   // 300MB
+            400 * MB,   // 400MB
+            500 * MB,   // 500MB
+            1000 * MB   // 1GB
+        ];
+        
+        var selectedInterval = intervals[0];
+        
+        for (var i = 0; i < intervals.length; i++) {
+            var interval = intervals[i];
+            if (interval * 6 >= max) {
+                selectedInterval = interval;
+                break;
+            }
+        }
+        
+        if (selectedInterval * 6 < max) {
+            selectedInterval = intervals[intervals.length - 1];
+        }
+        
+        return selectedInterval;
+    }
+    
+    function loadTrafficData(){
+        var newInterface = 'wan';
+        if(newInterface !== currentInterface){
+            currentInterface = newInterface;
+            updateTrafficTitle(currentInterface);
+
+            if(up.length === 0){
+                up = [];
+                down = [];
+                curUp = 2e7;
+                curDown = 5e7;
+                for(var i=0; i<30; i++){
+                    up.push(0);
+                    down.push(0);
+                }
+            }
+        }
+        curUp = randomWalk(curUp, 8e6);
+        curDown = randomWalk(curDown, 12e6);
+        up.push(curUp);
+        down.push(curDown);
+        up.shift();
+        down.shift();
+        
+        var maxValue = Math.max.apply(Math, up.concat(down));
+        
+        var interval = calculateYAxisInterval(maxValue);
+        
+        var suggestedMax = interval * 6;
+        
+        lineWan.setOption({ 
+            yAxis: {
+                interval: interval,
+                max: suggestedMax
+            },
+            series:[{data:up},{data:down}] 
+        });
+        
+        updateWanRealtimeRate(curUp, curDown);
+    }
+    
+    function updateTrafficTitle(interfaceName){
+        var $titleEl = $('#traffic-title');
+        if($titleEl.length){
+            if(interfaceName){
+                $titleEl.text('流量统计(' + interfaceName + ')');
+            } else {
+                $titleEl.text('流量统计');
+            }
+        }
+    }
+    
+    function bytes(v){ 
+        if (v >= 1024 * 1024) {
+            var mb = v / (1024 * 1024);
+            return mb.toFixed(1) + ' MB/s';
+        } else if (v >= 1024) {
+            var kb = v / 1024;
+            return Math.round(kb) + ' KB/s';
+        }
+        return Math.round(v) + ' B/s';
+    }
+    
+    function updateWanRealtimeRate(upBytes, downBytes) {
+        var formatRate = function(bytes) {
+            if (bytes >= 1024 * 1024) {
+                var mb = bytes / (1024 * 1024);
+                return mb.toFixed(1) + ' MB/s';
+            } else if (bytes >= 1024) {
+                var kb = bytes / 1024;
+                return Math.round(kb) + ' KB/s';
+            }
+            return Math.round(bytes) + ' B/s';
+        };
+        
+        var $upRate = $('#wan-up-rate');
+        var $downRate = $('#wan-down-rate');
+        if ($upRate.length) {
+            $upRate.text(formatRate(upBytes));
+        }
+        if ($downRate.length) {
+            $downRate.text(formatRate(downBytes));
+        }
+    }
+    var x = [], up = [], down = [], curUp = 2e7, curDown = 5e7; // bytes/s
+    for (var i=0;i<30;i++){ x.push(i-29); }
+    lineWan.setOption({
+        backgroundColor: 'transparent',
+        color: ['#60a5fa', '#22c55e'],  // 蓝色=上行，绿色=下行（与图片一致）
+        textStyle:{ color: axisLabelColor },
+        animation: false,  // 禁用初始动画
+        animationDurationUpdate: 0,  // 更新时无动画延迟，实现平滑平移
+        tooltip:{ 
+            trigger:'axis', 
+            backgroundColor: tooltipBg,
+            textStyle: { color: tooltipText },
+            formatter:function(p){
+                return _Upstream + ': '+bytes(p[0].data)+'<br/>'+_Downstream + ': '+bytes(p[1].data);
+            }
+        },
+        grid: {
+            left: '8%',  // 增加左边距，确保Y轴刻度数字完整显示
+            right: '3%',  // 减少右边距
+            top: '15%',  // 减少上边距，为图例留出空间
+            bottom: '3%',  // 减少下边距
+            containLabel: false
+        },
+        xAxis:{ 
+            type:'category', 
+            data:x, 
+            boundaryGap:false, 
+            axisLabel:{show:false, color:axisLabelColor}, 
+            axisLine:axis.axisLine, 
+            splitLine:axis.splitLine 
+        },
+        yAxis:{ 
+            type:'value',
+            min: 0,
+            interval: 20 * 1024, 
+            max: 20 * 1024 * 6,  
+            axisLabel:{ 
+                formatter:function(v){
+                    if (v === 0) return '0';
+                    if (v >= 1024 * 1024) {
+                        var mb = v / (1024 * 1024);
+                        return mb.toFixed(1) + ' MB/s';
+                    } else if (v >= 1024) {
+                        var kb = v / 1024;
+                        return Math.round(kb) + ' KB/s';
+                    }
+                    return Math.round(v) + ' B/s';
+                }, 
+                color:axisLabelColor 
+            }, 
+            axisLine:axis.axisLine, 
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    type: 'dashed', 
+                    color: splitLineDashedColor,
+                    width: 1
+                }
+            }
+        },
+        series:[
+            { 
+                name:_Upstream, 
+                type:'line', 
+                smooth:true, 
+                symbol:'none', 
+                lineStyle: {
+                    width: 1.2
+                },
+                areaStyle:{opacity:0.18}, 
+                data:up 
+            },
+            { 
+                name:_Downstream, 
+                type:'line', 
+                smooth:true, 
+                symbol:'none', 
+                lineStyle: {
+                    width: 1.2  
+                },
+                areaStyle:{opacity:0.18}, 
+                data:down 
+            }
+        ],
+        legend:{ top:0, textStyle:{color:axisLabelColor} }
+    });
+
+    if(typeof up === 'undefined' || up.length === 0){
+        up = [];
+        down = [];
+        for(var i=0; i<30; i++){
+            up.push(0);
+            down.push(0);
+        }
+    }
+
+    var $tbody = $('#client-body');
+    var activeUsersData = [];
+    
+    function formatRate(bytesPerSec) {
+        if (bytesPerSec < 1024) {
+            return bytesPerSec + ' B/s';
+        } else if (bytesPerSec < 1024 * 1024) {
+            var kb = bytesPerSec / 1024;
+            return (kb % 1 === 0 ? kb.toFixed(0) : kb.toFixed(1)) + ' KB/s';
+        } else {
+            var mb = bytesPerSec / (1024 * 1024);
+            if (mb >= 1) {
+                return (mb % 1 === 0 ? mb.toFixed(0) : mb.toFixed(1)) + ' MB/s';
+            } else {
+                var kb = bytesPerSec / 1024;
+                return (kb % 1 === 0 ? kb.toFixed(0) : kb.toFixed(1)) + ' KB/s';
+            }
+        }
+    }
+    
+    function formatTraffic(bytes) {
+        if (bytes < 1024) {
+            return bytes + ' B';
+        } else if (bytes < 1024 * 1024) {
+            return Math.round(bytes / 1024) + ' KB';
+        } else if (bytes < 1024 * 1024 * 1024) {
+            var mb = bytes / (1024 * 1024);
+            if (mb >= 1) {
+                return Math.round(mb) + ' MB';
+            } else {
+                return Math.round(bytes / 1024) + ' KB';
+            }
+        } else {
+            var gb = bytes / (1024 * 1024 * 1024);
+            if (gb >= 1) {
+                return (gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)) + ' GB';
+            } else {
+                var mb = bytes / (1024 * 1024);
+                return Math.round(mb) + ' MB';
+            }
+        }
+    }
+    
+    function formatUserDisplayName(user) {
+        if (!user) {
+            return { display: '', full: '' };
+        }
+        
+        var rawName = '';
+        if (user.nickname && user.nickname.trim() !== '') {
+            rawName = user.nickname;
+        } else if (user.hostname && user.hostname.trim() !== '') {
+            rawName = user.hostname;
+        } else {
+            rawName = user.mac || '';
+        }
+        
+        return formatUserName(rawName, user.mac || '');
+    }
+    
+    function getUserDisplayName(user) {
+        var nameInfo = formatUserDisplayName(user);
+        return nameInfo.display;
+    }
+    
+    function renderClientList() {
+        $tbody.empty();
+        if (!activeUsersData || activeUsersData.length === 0) {
+            $tbody.html('<tr><td colspan="8" style="text-align:center;color:#888;">' + _NoData + '</td></tr>');
+            return;
+        }
+        
+        var rows = activeUsersData.map(function(user) {
+            var nameInfo = formatUserDisplayName(user);
+            var name = nameInfo.display;
+            var fullName = nameInfo.full;
+            var ip = user.ip || '';
+            var upRate = formatRate(user.up_rate || 0);
+            var downRate = formatRate(user.down_rate || 0);
+            var upTraffic = formatTraffic(user.today_up_bytes || 0);
+            var downTraffic = formatTraffic(user.today_down_bytes || 0);
+            var app = (user.app && user.app.trim() !== '') ? user.app : '--';
+            var url = (user.url && user.url.trim() !== '') ? user.url : '--';
+            
+            var titleAttr = (name !== fullName && fullName) ? ' title="' + fullName + '"' : '';
+            
+            return '<tr>' +
+                '<td' + titleAttr + '>' + name + '</td>' +
+                '<td title="' + (ip || '') + '">' + ip + '</td>' +
+                '<td>' + upRate + '</td>' +
+                '<td>' + downRate + '</td>' +
+                '<td>' + upTraffic + '</td>' +
+                '<td>' + downTraffic + '</td>' +
+                '<td title="' + (app !== '--' ? app : '') + '">' + app + '</td>' +
+                '<td title="' + (url !== '--' ? url : '') + '">' + (url !== '--' && url.length > 30 ? url.substring(0, 30) + '...' : url) + '</td>' +
+                '</tr>';
+        }).join('');
+        $tbody.html(rows);
+    }
+
+    function formatTime(timestamp){
+        var d = new Date(timestamp);
+        return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0')+' '+
+               d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');
+    }
+    function updateActiveApps(appList){
+        var $container = $('#active-apps');
+        
+        if(!$container.length) return;
+        
+        if(!Array.isArray(appList)) {
+            appList = [];
+        }
+        
+        $container.empty();
+        
+        if(!appList || appList.length === 0) {
+            var $noData = $('<div>').addClass('no-data').css({
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center',
+                'width': '100%',
+                'min-height': '60px',
+                'color': '#888',
+                'font-size': '14px'
+            }).text(_NoData);
+            $container.append($noData);
+            return;
+        }
+        
+        var displayList = appList.slice(0, 10);
+        displayList.forEach(function(app){
+            var $appItem = $('<div>').addClass('app-item');
+            var $icon = $('<img>').addClass('app-icon')
+                .attr('src', '<%=resource%>/app_icons/' + app.id + '.png')
+                .attr('alt', app.name || 'app')
+                .on('error', function(){ $(this).attr('src', '<%=resource%>/app_icons/default.png'); });
+            var $nameSpan = $('<div>').addClass('app-name').text(app.name || ('app' + app.id));
+            var $tooltip = $('<div>').addClass('tooltip tooltip-top tooltip-arrow-center tooltip-center-x');
+            
+            var timestamp = app.timestamp ? formatTime(app.timestamp * 1000) : formatTime(Date.now());
+            var tooltipHtml = 
+                '<div class="tooltip-row"><span class="tooltip-label">' + _AccessTime + ':</span><span class="tooltip-value">'+timestamp+'</span></div>';
+            if(app.mac) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _MACAddress + ':</span><span class="tooltip-value">'+app.mac+'</span></div>';
+            if(app.src_ip) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _SourceIP + ':</span><span class="tooltip-value">'+app.src_ip+'</span></div>';
+            if(app.dst_ip) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _DestinationIP + ':</span><span class="tooltip-value">'+app.dst_ip+'</span></div>';
+            if(app.protocol) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _Protocol + ':</span><span class="tooltip-value">'+app.protocol+'</span></div>';
+            if(app.src_port) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _SourcePort + ':</span><span class="tooltip-value">'+app.src_port+'</span></div>';
+            if(app.dst_port) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _DestinationPort + ':</span><span class="tooltip-value">'+app.dst_port+'</span></div>';
+            if(app.domain) tooltipHtml += '<div class="tooltip-row"><span class="tooltip-label">' + _MatchedDomain + ':</span><span class="tooltip-value">'+app.domain+'</span></div>';
+            $tooltip.html(tooltipHtml);
+            $appItem.append($icon).append($nameSpan).append($tooltip);
+            $container.append($appItem);
+        });
+    }
+    
+    function extractDomain(url) {
+        if (!url || typeof url !== 'string') return '';
+        var domain = url.replace(/^https?:\/\//i, '');
+        var parts = domain.split('/');
+        return parts[0];
+    }
+    
+    function isHttps(url) {
+        if (!url || typeof url !== 'string') return false;
+        return url.toLowerCase().startsWith('https://');
+    }
+    
+    function truncateUrl(url, maxLength) {
+        if (!url || typeof url !== 'string') return '';
+        if (url.length <= maxLength) return url;
+        
+        var frontLength = 12;
+        var backLength = 12;
+        var front = url.substring(0, frontLength);
+        var back = url.substring(url.length - backLength);
+        return front + '...' + back;
+    }
+    
+    function isMacAddress(str) {
+        if (!str || typeof str !== 'string') return false;
+        var macPattern = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
+        return macPattern.test(str);
+    }
+    
+    function formatMacAddress(mac) {
+        if (!mac || typeof mac !== 'string') return '';
+        if (!isMacAddress(mac)) return mac;
+        
+        var parts = mac.split(':');
+        if (parts.length >= 3) {
+            return parts.slice(-3).join(':');
+        }
+        return mac;
+    }
+    
+    function hasChinese(str) {
+        if (!str || typeof str !== 'string') return false;
+        return /[\u4e00-\u9fa5]/.test(str);
+    }
+    
+    function formatUserName(name, mac) {
+        var displayName = name || mac || '';
+        var fullName = displayName;
+        
+        if (isMacAddress(displayName)) {
+            displayName = formatMacAddress(displayName);
+        } else if (displayName) {
+            if (hasChinese(displayName)) {
+                var chineseChars = displayName.match(/[\u4e00-\u9fa5]/g);
+                if (chineseChars && chineseChars.length > 5) {
+                    var count = 0;
+                    var index = 0;
+                    for (var i = 0; i < displayName.length; i++) {
+                        if (/[\u4e00-\u9fa5]/.test(displayName[i])) {
+                            count++;
+                            if (count === 5) {
+                                index = i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    displayName = displayName.substring(0, index) + '...';
+                }
+            } else {
+                if (displayName.length > 12) {
+                    var front = displayName.substring(0, 6);
+                    var back = displayName.substring(displayName.length - 6);
+                    displayName = front + '...' + back;
+                }
+            }
+        }
+        
+        return {
+            display: displayName,
+            full: fullName
+        };
+    }
+    
+    function getUrlProtocol(url) {
+        if (!url || typeof url !== 'string') return '';
+        if (url.toLowerCase().startsWith('https://')) return 'https://';
+        if (url.toLowerCase().startsWith('http://')) return 'http://';
+        return '';
+    }
+    
+    function startsWithWww(url) {
+        if (!url || typeof url !== 'string') return false;
+        var withoutProtocol = url.replace(/^https?:\/\//i, '');
+        return withoutProtocol.toLowerCase().startsWith('www.');
+    }
+    
+    var cachedHostKeys = [];  
+    var MAX_DISPLAY_HOSTS = 10;  
+    var pendingHostQueue = [];  
+    var isRenderingHosts = false; 
+    var hostRenderInterval = null; 
+    var isFirstRender = true; 
+    
+    var userColors = [
+        '#34d399', 
+        '#a78bfa',  
+        '#60a5fa',  
+        '#fbbf24',  
+        '#34d399', 
+        '#60a5fa', 
+        '#8b5cf6',  
+        '#a78bfa', 
+        '#c084fc', 
+        '#818cf8' 
+    ];
+    
+    function getUserColor(mac) {
+        if (!mac) return userColors[0];
+        
+        var hash = 0;
+        for (var i = 0; i < mac.length; i++) {
+            hash += mac.charCodeAt(i);
+        }
+        
+        var colorIndex = hash % userColors.length;
+        return userColors[colorIndex];
+    }
+    
+    function createHostItem(host) {
+        var $item = $('<div>').addClass('active-url-item');
+        
+        var fullUrl = host.url || host.host || '';
+        var userName = host.name || host.mac || '';
+        
+        if (startsWithWww(fullUrl)) {
+            $item.addClass('www-highlight');
+        }
+        
+        var protocol = getUrlProtocol(fullUrl);
+        
+        var urlWithoutProtocol = fullUrl.replace(/^https?:\/\//i, '');
+        var displayUrl = urlWithoutProtocol || '--';
+        if (displayUrl !== '--' && displayUrl.length > 24) {
+            displayUrl = truncateUrl(urlWithoutProtocol, 24);
+        }
+        
+        var nameInfo = formatUserName(host.name, host.mac);
+        var displayName = nameInfo.display;
+        var fullName = nameInfo.full;
+        
+        var userColor = getUserColor(host.mac);
+        
+        var $name = $('<span>').addClass('active-url-name');
+        if (displayName) {
+            $name.text(displayName + ': ');
+            $name.css('color', userColor);
+            if (displayName !== fullName) {
+                $name.attr('title', fullName);
+            }
+        }
+        var $url = $('<span>').addClass('active-url-url').text(displayUrl);
+        
+        $item.append($name).append($url);
+        
+        var titleParts = [];
+        if (fullName) {
+            titleParts.push(fullName);
+        }
+        if (fullUrl) {
+            titleParts.push(fullUrl);
+        }
+        if (titleParts.length > 0) {
+            $item.attr('title', titleParts.join(': '));
+        }
+        
+        var hostKey = (host.mac || '') + '|' + (fullUrl || '') + '|' + (host.timestamp || 0);
+        $item.data('host-key', hostKey);
+        
+        return $item;
+    }
+    
+    function getHostKey(host) {
+        var fullUrl = host.url || host.host || '';
+        return (host.mac || '') + '|' + fullUrl + '|' + (host.timestamp || 0);
+    }
+    
+    function renderNextHostItem(noAnimation) {
+        var $container = $('#active-url-list');
+        
+        if(!$container.length || pendingHostQueue.length === 0) {
+            isRenderingHosts = false;
+            if(hostRenderInterval) {
+                clearInterval(hostRenderInterval);
+                hostRenderInterval = null;
+            }
+            return;
+        }
+        
+        var host = pendingHostQueue.shift();
+        var $item = createHostItem(host);
+        
+        if(!noAnimation && !isFirstRender) {
+            $item.addClass('slide-in');
+            setTimeout(function() {
+                $item.removeClass('slide-in');
+            }, 400);
+        }
+        
+        $container.append($item);
+        
+        var key = getHostKey(host);
+        cachedHostKeys.push(key);
+        
+        var $items = $container.find('.active-url-item');
+        if($items.length > MAX_DISPLAY_HOSTS) {
+            var $oldestItem = $items.first();
+            var oldKey = $oldestItem.data('host-key');
+            var keyIndex = cachedHostKeys.indexOf(oldKey);
+            if(keyIndex !== -1) {
+                cachedHostKeys.splice(keyIndex, 1);
+            }
+            $oldestItem.remove();
+        }
+    }
+    
+    function startHostRendering(newHosts) {
+        if(!newHosts || newHosts.length === 0) {
+            return;
+        }
+        
+        if(isRenderingHosts) {
+            pendingHostQueue = pendingHostQueue.concat(newHosts);
+            return;
+        }
+        
+        var $container = $('#active-url-list');
+        var isFirstTime = isFirstRender && $container.find('.active-url-item').length === 0;
+        
+        isRenderingHosts = true;
+        pendingHostQueue = newHosts.slice(); 
+        
+        if(hostRenderInterval) {
+            clearInterval(hostRenderInterval);
+            hostRenderInterval = null;
+        }
+        
+        if(isFirstTime) {
+            while(pendingHostQueue.length > 0) {
+                renderNextHostItem(true); 
+            }
+            isFirstRender = false;
+            isRenderingHosts = false;
+        } else {
+            renderNextHostItem(false);
+            
+            hostRenderInterval = setInterval(function() {
+                renderNextHostItem(false);
+            }, 500);
+        }
+    }
+    
+    function updateActiveHosts(hostList){
+        var $container = $('#active-url-list');
+        
+        if(!$container.length) return;
+        
+        if(!Array.isArray(hostList)) {
+            hostList = [];
+        }
+        
+        $container.find('.active-url-header').remove();
+        
+        var currentKeys = [];
+        $container.find('.active-url-item').each(function() {
+            var key = $(this).data('host-key');
+            if (key) {
+                currentKeys.push(key);
+            }
+        });
+        
+        var newHosts = [];
+        if(hostList && hostList.length > 0) {
+            hostList.forEach(function(newHost) {
+                var newKey = getHostKey(newHost);
+                if(currentKeys.indexOf(newKey) === -1 && cachedHostKeys.indexOf(newKey) === -1) {
+                    newHosts.push(newHost);
+                }
+            });
+        }
+        
+        if(newHosts.length === 0 && currentKeys.length === 0 && !isRenderingHosts) {
+            $container.children().not('.active-url-header').remove();
+            var $noData = $('<div>').addClass('no-data').css({
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center',
+                'width': '100%',
+                'min-height': '60px',
+                'color': '#888',
+                'font-size': '14px',
+                'padding': '20px'
+            }).text(_NoData);
+            $container.append($noData);
+            return;
+        }
+        
+        if(newHosts.length > 0) {
+            $container.find('.no-data').remove();
+            startHostRendering(newHosts);
+        }
+    }
+    
+    function updateInterfaceTraffic(trafficData){
+        if(!trafficData || !trafficData.interface || !trafficData.traffic) return;
+        
+        var newInterface = trafficData.interface || '';
+        if(newInterface !== currentInterface){
+            currentInterface = newInterface;
+            updateTrafficTitle(currentInterface);
+        }
+        
+        var upData = [];
+        var downData = [];
+        trafficData.traffic.forEach(function(item){
+            upData.push(item.up || 0);
+            downData.push(item.down || 0);
+        });
+        
+        while(upData.length < 30){
+            upData.unshift(0);
+            downData.unshift(0);
+        }
+        if(upData.length > 30){
+            upData = upData.slice(-30);
+            downData = downData.slice(-30);
+        }
+        
+        var dataChanged = false;
+        if(!up || up.length !== upData.length){
+            dataChanged = true;
+        } else {
+            for(var i = 0; i < upData.length; i++){
+                if(up[i] !== upData[i] || down[i] !== downData[i]){
+                    dataChanged = true;
+                    break;
+                }
+            }
+        }
+        
+        if(dataChanged){
+            var maxValue = 0;
+            for(var i = 0; i < upData.length; i++){
+                maxValue = Math.max(maxValue, upData[i], downData[i]);
+            }
+            
+            var interval = calculateYAxisInterval(maxValue);
+            
+            var suggestedMax = interval * 6;
+            
+            up = upData;
+            down = downData;
+            lineWan.setOption({ 
+                yAxis: {
+                    interval: interval,
+                    max: suggestedMax
+                },
+                series:[
+                    {data:up},
+                    {data:down}
+                ],
+                animation: false,  
+                animationDurationUpdate: 0  
+            }, { notMerge: false, lazyUpdate: false });
+        }
+        
+        var lastUp = upData.length > 0 ? upData[upData.length - 1] : 0;
+        var lastDown = downData.length > 0 ? downData[downData.length - 1] : 0;
+        updateWanRealtimeRate(lastUp, lastDown);
+    }
+
+    function updateUserTrafficChart(data){
+        if(!data || !data.users || !Array.isArray(data.users)) {
+            barUserTraffic.setOption({
+                yAxis: [
+                    { data: [] },
+                    { data: [] }
+                ],
+                series: [
+                    { name: _Upstream, data: [] },
+                    { name: _Downstream, data: [] }
+                ]
+            });
+            return;
+        }
+        
+        var users = data.users || [];
+        var names = [];
+        var upValues = [];
+        var downValues = [];
+        
+        users.forEach(function(user){
+            var nameInfo = formatUserDisplayName(user);
+            var displayName = nameInfo.display || _Unknown;
+            var fullName = nameInfo.full;
+            names.push(displayName);
+            
+            var userInfo = {
+                name: displayName,  
+                fullName: fullName, 
+                mac: user.mac || '',
+                ip: user.ip || '',
+                hostname: user.hostname || '',
+                nickname: user.nickname || '',
+                up_bytes: user.up_bytes || 0,
+                down_bytes: user.down_bytes || 0,
+                total_bytes: user.total_bytes || 0,
+                _rawUser: user
+            };
+            
+            upValues.push({
+                value: user.up_bytes || 0,
+                user: userInfo
+            });
+            
+            downValues.push({
+                value: user.down_bytes || 0,
+                user: userInfo
+            });
+        });
+        
+        names.reverse();
+        upValues.reverse();
+        downValues.reverse();
+        
+        var userCount = users.length;
+        var gridConfig = {
+            left: '8%', 
+            right: '10%',
+            top: '2%',  
+            bottom: '12%', 
+            containLabel: false
+        };
+        
+        var maxTraffic = 0;
+        users.forEach(function(user) {
+            var total = (user.up_bytes || 0) + (user.down_bytes || 0);
+            if (total > maxTraffic) {
+                maxTraffic = total;
+            }
+        });
+        
+        var calculatedMax = maxTraffic * 1.15;
+        
+        var boundaryGapConfig = [0, 0]; 
+        var barCategoryGapValue = '50%'; 
+        
+        if (userCount <= 3) {
+            boundaryGapConfig = [0, 0.5];
+            barCategoryGapValue = 10;
+        } else {
+            boundaryGapConfig = [0, 0];
+            barCategoryGapValue = '50%';
+        }
+        
+        barUserTraffic.setOption({
+            grid: gridConfig,
+            xAxis: {
+                min: 0, 
+                max: calculatedMax 
+            },
+            yAxis: [
+                {
+                    data: names,
+                    boundaryGap: boundaryGapConfig, 
+                    axisLabel: {
+                        formatter: function(value, index) {
+                            return (names.length - index).toString();
+                        }
+                    }
+                },
+                {
+                    data: names,
+                    boundaryGap: boundaryGapConfig,  
+                    axisLabel: {
+                        show: false 
+                    }
+                }
+            ],
+            series: [
+                { 
+                    name: _Upstream,
+                    data: upValues,
+                    barWidth: 25,
+                    barCategoryGap: barCategoryGapValue,  
+                    label: {
+                        show: false 
+                    }
+                },
+                { 
+                    name: _Downstream,
+                    data: downValues,
+                    barWidth: 25,
+                    barCategoryGap: barCategoryGapValue, 
+                    label: {
+                        show: true,  
+                        position: 'right', 
+                        color: axisLabelColor,
+                        fontSize: 11,
+                        formatter: function(params) {
+                            if (params.data.user) {
+                                var totalBytes = (params.data.user.up_bytes || 0) + (params.data.user.down_bytes || 0);
+                                var totalTraffic = formatTraffic(totalBytes);
+                                
+                                var maxValue = calculatedMax;
+                                var percentage = totalBytes / maxValue;
+                                
+                                var rawUser = params.data.user._rawUser || params.data.user;
+                                var rawName = '';
+                                if (rawUser.nickname && rawUser.nickname.trim() !== '') {
+                                    rawName = rawUser.nickname;
+                                } else if (rawUser.hostname && rawUser.hostname.trim() !== '') {
+                                    rawName = rawUser.hostname;
+                                } else {
+                                    rawName = rawUser.mac || '';
+                                }
+                                
+                                var displayName = rawName;
+                                
+                                if (percentage < 0.5) {
+                                    if (isMacAddress(displayName)) {
+                                        displayName = formatMacAddress(displayName);
+                                    } else if (displayName) {
+                                        if (hasChinese(displayName)) {
+                                            var chineseChars = displayName.match(/[\u4e00-\u9fa5]/g);
+                                            if (chineseChars && chineseChars.length > 10) {
+                                                var count = 0;
+                                                var index = 0;
+                                                for (var i = 0; i < displayName.length; i++) {
+                                                    if (/[\u4e00-\u9fa5]/.test(displayName[i])) {
+                                                        count++;
+                                                        if (count === 10) {
+                                                            index = i + 1;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                displayName = displayName.substring(0, index) + '...';
+                                            }
+                                        } else {
+                                            if (displayName.length > 20) {
+                                                displayName = displayName.substring(0, 17) + '...';
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if (isMacAddress(displayName)) {
+                                        displayName = formatMacAddress(displayName);
+                                    } else if (displayName) {
+                                        if (hasChinese(displayName)) {
+                                            var chineseChars = displayName.match(/[\u4e00-\u9fa5]/g);
+                                            if (chineseChars && chineseChars.length > 5) {
+                                                var count = 0;
+                                                var index = 0;
+                                                for (var i = 0; i < displayName.length; i++) {
+                                                    if (/[\u4e00-\u9fa5]/.test(displayName[i])) {
+                                                        count++;
+                                                        if (count === 5) {
+                                                            index = i + 1;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                displayName = displayName.substring(0, index) + '...';
+                                            }
+                                        } else {
+                                            if (displayName.length > 12) {
+                                                var front = displayName.substring(0, 6);
+                                                var back = displayName.substring(displayName.length - 6);
+                                                displayName = front + '...' + back;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                return displayName + '(' + totalTraffic + ')';
+                            }
+                            return '';
+                        },
+                        distance: 5
+                    }
+                }
+            ]
+        });
+    }
+
+
+//]]></script>

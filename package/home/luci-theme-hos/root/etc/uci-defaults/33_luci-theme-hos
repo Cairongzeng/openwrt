@@ -1,0 +1,25 @@
+#!/bin/sh
+
+if [ "$PKG_UPGRADE" != 1 ]; then
+    uci get luci.themes.HOS >/dev/null 2>&1 || {
+        uci set luci.themes.HOS=/luci-static/hos
+        uci set luci.main.mediaurlbase=/luci-static/hos
+        uci commit luci
+    }
+fi
+
+touch /etc/config/hos
+
+if ! uci -q get hos.global >/dev/null; then
+    uci batch <<EOF
+set hos.global=global
+set hos.global.theme_mode='1'
+set hos.global.blur='10'
+set hos.global.blur_dark='10'
+set hos.global.transparency='0.8'
+set hos.global.transparency_dark='0.6'
+commit hos
+EOF
+fi
+
+exit 0

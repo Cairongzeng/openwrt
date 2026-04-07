@@ -1,0 +1,472 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com> -->
+<%+header%>
+<script src="/luci-static/resources/jquery-3.7.1.min.js"></script>
+<script src="/luci-static/resources/common.js"></script>
+
+<style>
+.app-form-card input[type="text"],
+.app-form-card select,
+.app-form-card .input-short {
+    width: 200px !important;
+    box-sizing: border-box;
+}
+.app-form-card .form-title,
+.app-form-card .section-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+.app-form-card .form-desc {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.app-form-card .form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+.app-form-card .form-label {
+    width: 140px;
+    font-weight: 500;
+    color: inherit;
+}
+.input-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.input-field input {
+    width: 200px !important;
+}
+.error-msg {
+    color: #f87171;
+    font-size: 12px;
+    line-height: 1.4;
+}
+button#lan-save {
+    width: 80px !important;
+    height: 30px !important;
+    background-color: #5c9bd5 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 30px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#lan-save:hover {
+    background-color: #4a8ac2 !important;
+}
+button#lan-refresh {
+    width: 80px !important;
+    height: 30px !important;
+    background: transparent !important;
+    border: 1px solid #5c9bd5 !important;
+    color: #5c9bd5 !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 28px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#lan-refresh:hover {
+    background: #e6f0ff !important;
+    border-color: #4a8ac2 !important;
+    color: #4a8ac2 !important;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #5c9bd5;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+@media screen and (max-width: 600px) {
+    .form-row {
+        flex-wrap: wrap;
+    }
+    .form-label {
+        width: 100%;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+    .input-field {
+        width: 100%;
+    }
+    .input-field input,
+    .input-field .error-msg {
+        width: 100% !important;
+    }
+    .app-form-card input[type="text"],
+    .app-form-card select,
+    .app-form-card .input-short,
+    .app-form-card .form-row > div {
+        width: 100% !important;
+        max-width: none;
+        box-sizing: border-box;
+    }
+    .button-container {
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<div class="app-form-card" style="max-width:1000px; margin:0 auto; padding:5px">
+    <div class="form-title"><%:LAN Setting%></div>
+    <div class="form-desc"><%:Configure default LAN interface%></div>
+    <div class="form-row">
+        <label class="form-label" for="lan-proto"><%:Protocol%></label>
+        <select id="lan-proto">
+            <option value="static"><%:Static%></option>
+            <option value="dhcp"><%:DHCP%></option>
+        </select>
+    </div>
+    <div class="form-row" id="lan-ip-row">
+        <label class="form-label" for="lan-ip"><%:IP Address%></label>
+        <div class="input-field">
+            <input id="lan-ip" type="text" placeholder="192.168.1.1">
+            <div class="error-msg" id="lan-ip-error"></div>
+        </div>
+    </div>
+    <div class="form-row" id="lan-mask-row">
+        <label class="form-label" for="lan-mask"><%:Netmask%></label>
+        <div class="input-field">
+            <input id="lan-mask" type="text" placeholder="255.255.255.0">
+            <div class="error-msg" id="lan-mask-error"></div>
+        </div>
+    </div>
+    <div class="form-row" id="lan-gw-row">
+        <label class="form-label" for="lan-gw"><%:Gateway%></label>
+        <div class="input-field">
+            <input id="lan-gw" type="text" placeholder="">
+            <div class="error-msg" id="lan-gw-error"></div>
+        </div>
+    </div>
+    <div class="form-row" id="lan-dns1-row">
+        <label class="form-label" for="lan-dns1">DNS1</label>
+        <div class="input-field">
+            <input id="lan-dns1" type="text" placeholder="">
+            <div class="error-msg" id="lan-dns1-error"></div>
+        </div>
+    </div>
+    <div class="form-row" id="lan-dns2-row">
+        <label class="form-label" for="lan-dns2">DNS2</label>
+        <div class="input-field">
+            <input id="lan-dns2" type="text" placeholder="" disabled>
+            <div class="error-msg" id="lan-dns2-error"></div>
+        </div>
+    </div>
+    <div id="dhcp-server-section" class="section-header"><%:DHCP Server%></div>
+    <div id="dhcp-server-config">
+        <div class="form-row">
+            <label class="form-label" for="lan-dhcp-enable"><%:Enable DHCP%></label>
+            <label class="switch">
+                <input type="checkbox" id="lan-dhcp-enable">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="form-row">
+            <label class="form-label" for="lan-dhcp-start"><%:Start IP Offset%></label>
+            <input id="lan-dhcp-start" class="input-short" type="number" min="1" max="255" placeholder="100">
+        </div>
+        <div class="form-row">
+            <label class="form-label" for="lan-dhcp-limit"><%:Pool Size%></label>
+            <input id="lan-dhcp-limit" class="input-short" type="number" min="1" max="255" placeholder="150">
+        </div>
+        <div class="form-row">
+            <label class="form-label" for="lan-dhcp-leasetime"><%:Lease Time%></label>
+            <select id="lan-dhcp-leasetime">
+                <option value="10"><%:10 minutes%></option>
+                <option value="15"><%:15 minutes%></option>
+                <option value="30"><%:30 minutes%></option>
+                <option value="45"><%:45 minutes%></option>
+                <option value="60"><%:1 hour%></option>
+                <option value="120"><%:2 hours%></option>
+                <option value="180"><%:3 hours%></option>
+                <option value="240"><%:4 hours%></option>
+                <option value="300"><%:5 hours%></option>
+                <option value="360"><%:6 hours%></option>
+                <option value="480"><%:8 hours%></option>
+                <option value="720"><%:12 hours%></option>
+                <option value="1440"><%:1 day%></option>
+                <option value="2880"><%:2 days%></option>
+                <option value="4320"><%:3 days%></option>
+                <option value="10080"><%:7 days%></option>
+            </select>
+        </div>
+    </div>
+    <div class="button-container" style="margin-top:20px; margin-bottom:50px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="lan-refresh"><%:Refresh%></button>
+        <button id="lan-save"><%:Save%></button>
+    </div>
+    <div class="status-tip" id="lan-tip"></div>
+</div>
+
+<script>
+(function(){
+    var _SavedSuccessfully = '<%:Saved successfully%>';
+    var _SaveFailed = '<%:Save failed%>';
+    var _Loading = '<%:Loading...%>';
+    var _LoadFailed = '<%:Load failed%>';
+    var _InvalidIP = '<%:Invalid IP address%>';
+    var _InvalidNetmask = '<%:Invalid netmask%>';
+    var _InvalidGateway = '<%:Invalid gateway%>';
+    var _InvalidDNS = '<%:Invalid DNS address%>';
+    var _DNS1Required = '<%:DNS1 must be set before DNS2%>';
+    var _UpdatingLAN = '<%:Updating LAN interface settings%>';
+    var _LANUpdateMessage = '<%:This will take approximately 1 minute. Please access the management interface using the new IP address.%>';
+    var _ConfirmLANChange = '<%:Are you sure you want to modify the LAN interface configuration?%>';
+    var _LANChangeWarning = '<%:This will cause network disconnection.%>';
+    
+    const apiGet = '<%=url("admin/network/get_lan_info")%>';
+    const apiSet = '<%=url("admin/network/set_lan_info")%>';
+    
+    function showModal(msg, ok) {
+        if (ok) {
+            showCommonModal(msg, 2000, 'success');
+        } else {
+            showCommonModal(msg, 2000, 'error');
+        }
+    }
+    
+    function showLANUpdateModal() {
+        var modalHtml = '<div id="lan-update-modal" style="padding:5px">' +
+            '<div style="padding:0">' +
+            '<div style="padding:0">' +
+            '<div class="lan-spinner" style="padding:5px"></div>' +
+            '<h3 style="padding:5px">' + _UpdatingLAN + '</h3>' +
+            '<p style="padding:5px">' + _LANUpdateMessage + '</p>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+        
+        $('#lan-update-modal').remove();
+        $('body').append(modalHtml);
+        
+        if (!$('#lan-spinner-style').length) {
+            $('head').append('<style id="lan-spinner-style">.lan-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5c9bd5; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>');
+        }
+        
+        setTimeout(function() {
+            $('#lan-update-modal').fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 60000);
+    }
+    
+    function showError(fieldId, errorMsg) {
+        $('#' + fieldId + '-error').text(errorMsg).show();
+        $('#' + fieldId).css('border-color', '#f87171');
+    }
+    
+    function clearError(fieldId) {
+        $('#' + fieldId + '-error').hide();
+        $('#' + fieldId).css('border-color', '');
+    }
+    
+    function validateField(fieldId, validator, errorMsg) {
+        const value = $('#' + fieldId).val();
+        if (value && !validator(value)) {
+            showError(fieldId, errorMsg);
+            return false;
+        } else {
+            clearError(fieldId);
+            return true;
+        }
+    }
+    
+    function toggleDhcpSection() {
+        const proto = $('#lan-proto').val();
+        if (proto === 'dhcp') {
+            $('#lan-ip-row').hide();
+            $('#lan-mask-row').hide();
+            $('#lan-gw-row').hide();
+            $('#lan-dns1-row').hide();
+            $('#lan-dns2-row').hide();
+            $('#dhcp-server-section').hide();
+            $('#dhcp-server-config').hide();
+        } else {
+            $('#lan-ip-row').show();
+            $('#lan-mask-row').show();
+            $('#lan-gw-row').show();
+            $('#lan-dns1-row').show();
+            $('#lan-dns2-row').show();
+            $('#dhcp-server-section').show();
+            $('#dhcp-server-config').show();
+        }
+    }
+    
+    function toggleDNS2() {
+        const dns1 = $('#lan-dns1').val();
+        if (dns1 && dns1.trim() !== '') {
+            $('#lan-dns2').prop('disabled', false);
+            clearError('lan-dns2');
+        } else {
+            $('#lan-dns2').prop('disabled', true).val('');
+            clearError('lan-dns2');
+        }
+    }
+    
+    function minutesToSelectValue(minutes) {
+        const options = [10, 15, 30, 45, 60, 120, 180, 240, 300, 360, 480, 720, 1440, 2880, 4320, 10080];
+        let closest = options[0];
+        let minDiff = Math.abs(minutes - options[0]);
+        for (let i = 1; i < options.length; i++) {
+            const diff = Math.abs(minutes - options[i]);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = options[i];
+            }
+        }
+        return closest;
+    }
+    
+    function render(data) {
+        const d = (data && data.data) || {};
+        $('#lan-proto').val(d.proto || 'static');
+        $('#lan-ip').val(d.ipaddr || '');
+        $('#lan-mask').val(d.netmask || '');
+        $('#lan-gw').val(d.gateway || '');
+        $('#lan-dns1').val(d.dns1 || '');
+        $('#lan-dns2').val(d.dns2 || '');
+        const dhcp = d.dhcp || {};
+        $('#lan-dhcp-enable').prop('checked', !!dhcp.enable);
+        $('#lan-dhcp-start').val(dhcp.start || '');
+        $('#lan-dhcp-limit').val(dhcp.limit || '');
+        
+        const leasetime = dhcp.leasetime || 720;
+        const selectValue = minutesToSelectValue(leasetime);
+        $('#lan-dhcp-leasetime').val(selectValue);
+        toggleDhcpSection();
+        toggleDNS2();
+    }
+    
+    function refresh() {
+        $('#lan-tip').text(_Loading);
+        $.getJSON(apiGet, function(resp){
+            render(resp);
+            $('#lan-tip').text('');
+        }).fail(function(){
+            $('#lan-tip').text(_LoadFailed);
+        });
+    }
+    
+    function save() {
+        if (!confirm(_ConfirmLANChange + '\n' + _LANChangeWarning)) {
+            return;
+        }
+        const proto = $('#lan-proto').val();
+        let isValid = true;
+        
+        if (proto === 'static') {
+            isValid = validateField('lan-ip', validateIP, _InvalidIP) && isValid;
+            isValid = validateField('lan-mask', validateNetmask, _InvalidNetmask) && isValid;
+            isValid = validateField('lan-gw', validateIP, _InvalidGateway) && isValid;
+            isValid = validateField('lan-dns1', validateIP, _InvalidDNS) && isValid;
+            
+            const dns1 = $('#lan-dns1').val();
+            const dns2 = $('#lan-dns2').val();
+            if ((!dns1 || dns1.trim() === '') && dns2 && dns2.trim() !== '') {
+                showError('lan-dns2', _DNS1Required);
+                isValid = false;
+            } else {
+                isValid = validateField('lan-dns2', validateIP, _InvalidDNS) && isValid;
+            }
+        }
+        if (!isValid) {
+            return;
+        }
+        const payload = {
+            proto: proto,
+            ipaddr: $('#lan-ip').val(),
+            netmask: $('#lan-mask').val(),
+            gateway: $('#lan-gw').val(),
+            dns1: $('#lan-dns1').val(),
+            dns2: $('#lan-dns2').val()
+        };
+        if (proto === 'dhcp') {
+            payload['dhcp.enable'] = 0;
+        } else {
+            payload['dhcp.enable'] = $('#lan-dhcp-enable').is(':checked') ? 1 : 0;
+            payload['dhcp.start'] = $('#lan-dhcp-start').val();
+            payload['dhcp.limit'] = $('#lan-dhcp-limit').val();
+            payload['dhcp.leasetime'] = $('#lan-dhcp-leasetime').val();
+        }
+        $('#lan-save').prop('disabled', true);
+        
+        showLANUpdateModal();
+        
+        $.ajax({
+            url: apiSet,
+            method: 'POST',
+            data: payload,
+            timeout: 5000,
+            async: true
+        }).done(function(resp){
+        }).fail(function(){
+        });
+    }
+    
+    $('#lan-proto').on('change', toggleDhcpSection);
+    $('#lan-ip').on('blur', function() { validateField('lan-ip', validateIP, _InvalidIP); });
+    $('#lan-mask').on('blur', function() { validateField('lan-mask', validateNetmask, _InvalidNetmask); });
+    $('#lan-gw').on('blur', function() { validateField('lan-gw', validateIP, _InvalidGateway); });
+    $('#lan-dns1').on('blur', function() {
+        validateField('lan-dns1', validateIP, _InvalidDNS);
+        toggleDNS2();
+    });
+    $('#lan-dns2').on('blur', function() { validateField('lan-dns2', validateIP, _InvalidDNS); });
+    $('#lan-refresh').on('click', refresh);
+    $('#lan-save').on('click', save);
+    $(refresh);
+})();
+</script>
+
+<%+footer%>

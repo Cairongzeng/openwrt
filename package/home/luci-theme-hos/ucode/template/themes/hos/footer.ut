@@ -1,0 +1,73 @@
+{# SPDX-License-Identifier: Apache-2.0 #}
+{#
+    Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com>
+#}
+<style>
+#footer-qr-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-card, #fff);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-modal, 0 5px 20px rgba(0,0,0,0.1));
+    z-index: 10000;
+    text-align: center;
+}
+#footer-qr-popup img {
+    display: block;
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+</style>
+</div>
+<footer class="mobile-hide" style="text-wrap: auto">
+    <div class="footer-content" style="display: flex; flex-wrap: wrap; gap: 0.5em; justify-content: end;">
+        <div style="position: relative;">
+            <a href="javascript:void(0)" onclick="toggleFooterQR()" class="luci-link">Powered by {{ version.distname }} {{ version.distversion }} ({{ version.distrevision }})</a>
+            <div id="footer-qr-popup">
+                <img src="/luci-static/resources/icons/WeChat.png" alt="QR code">
+            </div>
+        </div>
+        <span class="footer-separator">|</span>
+        <a class="luci-link" href="https://github.com/openwrt/luci" target="_blank">{{ version.luciname }} ({{ version.luciversion }})</a>
+        <ul class="breadcrumb pull-right" id="modemenu" style="display:none"></ul>
+    </div>
+</footer>
+<script>
+    var luciLocation = {{ ctx.path }};
+    var winHeight = window.innerHeight;
+    window.addEventListener('resize', function () {
+        var winWidth = window.innerWidth;
+        if(winWidth < 600){
+            var newHeight = window.innerHeight;
+            var keyboradHeight = newHeight - winHeight;
+            var ftcElement = document.querySelector(".ftc");
+            if (ftcElement) {
+                ftcElement.style.bottom = (keyboradHeight + 30) + "px";
+            }
+        }
+    });
+
+    function toggleFooterQR() {
+        var qr = document.getElementById('footer-qr-popup');
+        if (qr) {
+            qr.style.display = qr.style.display === 'block' ? 'none' : 'block';
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var qr = document.getElementById('footer-qr-popup');
+        var link = document.querySelector("a[onclick*='toggleFooterQR']");
+        if (qr && qr.style.display === 'block' && !qr.contains(e.target) && !link.contains(e.target)) {
+            qr.style.display = 'none';
+        }
+    });
+</script>
+<script type="text/javascript">L.require('menu-hos')</script>
+</body>
+</html>

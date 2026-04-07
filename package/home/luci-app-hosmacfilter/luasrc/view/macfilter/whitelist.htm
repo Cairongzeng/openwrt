@@ -1,0 +1,426 @@
+<link rel="stylesheet" href="<%=resource%>/css/common.css">
+<script src="<%=resource%>/common.js"></script>
+
+<style>
+    .whitelist-container {
+        max-width: 1000px;
+        margin-left: 10px;
+        padding: 5px;
+    }
+    
+    .whitelist-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    /* Whitelist table styles - using common-table */
+    .whitelist-table {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .add-whitelist-btn {
+        margin: 20px 0;
+        padding: 10px 20px;
+        background-color: #2885e8;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .add-whitelist-btn:hover {
+        background-color: #1e6bb8;
+    }
+    
+    .delete-btn {
+        padding: 5px 12px;
+        background-color: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    
+    .delete-btn:hover {
+        background-color: #cc0000;
+    }
+    
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background-color: #2d2d2d;
+        color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 700px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        position: relative;
+    }
+    
+    .modal-header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    
+    .user-list {
+        flex: 1;
+        overflow-y: auto;
+        margin: 15px 0;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background-color: #1e1e1e;
+    }
+    
+    .user-item {
+        padding: 12px;
+        border-bottom: 1px solid #444;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        background-color: #1e1e1e;
+    }
+    
+    .user-item:hover {
+        background-color: #2a2a2a;
+    }
+    
+    .user-item:last-child {
+        border-bottom: none;
+    }
+    
+    .user-item input[type="checkbox"] {
+        margin-right: 12px;
+        cursor: pointer;
+    }
+    
+    .user-info {
+        flex: 1;
+    }
+    
+    .user-mac {
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 4px;
+    }
+    
+    .user-details {
+        font-size: 13px;
+        color: #ccc;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .modal-btn {
+        padding: 8px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .modal-btn-primary {
+        background-color: #2885e8;
+        color: white;
+        border: none;
+    }
+    
+    .modal-btn-primary:hover {
+        background-color: #1e6bb8;
+    }
+    
+    .modal-btn-secondary {
+        border: 1px solid;
+    }
+    
+    .modal-btn-secondary:hover {
+        opacity: 0.8;
+    }
+    
+    .success-message {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1001;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .success-content {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 20px 30px;
+        border-radius: 5px;
+        color: white;
+        text-align: center;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #ccc;
+    }
+</style>
+
+<script type="text/javascript">//<![CDATA[
+    var _NoWhitelistEntriesYet = "<%:No whitelist entries yet%>";
+    var _Delete = "<%:Delete%>";
+    var _NoAvailableDevices = "<%:No available devices to add%>";
+    var _PleaseSelectDevice = "<%:Please select at least one device%>";
+    var _AddSuccess = "<%:Add success%>";
+    var _AddFailed = "<%:Add failed%>";
+    var _ConfirmRemove = "<%:Are you sure you want to remove this device from whitelist?%>";
+    var _DeleteSuccess = "<%:Delete success%>";
+    var _DeleteFailed = "<%:Delete failed%>";
+    
+    let whitelistData = {
+        list: []
+    };
+    
+    let allUsers = [];
+    
+    function initData() {
+        getWhitelistData();
+        getAllUsersData();
+    }
+    
+    function getWhitelistData() {
+        new XHR().get("<%=url('admin/hos/get_mac_filter_whitelist')%>", null,
+            function (x, data) {
+                if (data && data.data) {
+                    whitelistData = data.data;
+                } else {
+                    whitelistData = {list: []};
+                }
+                if (!Array.isArray(whitelistData.list)) {
+                    whitelistData.list = [];
+                }
+                renderWhitelistTable();
+            }
+        );
+    }
+    
+    function getAllUsersData() {
+        new XHR().get("<%=url('admin/hos/get_all_users')%>", {flag: 2, page: 0},
+            function (x, data) {
+                if (data && data.data && Array.isArray(data.data.list)) {
+                    allUsers = data.data.list;
+                    console.log('Loaded users:', allUsers.length);
+                } else {
+                    allUsers = [];
+                    console.warn('Failed to load users: invalid response data');
+                }
+            },
+            function (x, error) {
+                console.error('Failed to load users:', error);
+                allUsers = [];
+            }
+        );
+    }
+    
+    function renderWhitelistTable() {
+        const tableBody = document.getElementById('whitelistTableBody');
+        tableBody.innerHTML = '';
+        
+        if (whitelistData.list.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="5" style="text-align: center; padding: 30px; color: #999;">' + _NoWhitelistEntriesYet + '</td>';
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        whitelistData.list.forEach((user, index) => {
+            const hostname = user.hostname || '--';
+            const nickname = user.nickname || '--';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td style="font-family: monospace; font-weight: bold;">${user.mac}</td>
+                <td>${hostname}</td>
+                <td>${nickname}</td>
+                <td>
+                    <button type="button" class="delete-btn" onclick="removeWhitelistUser('${user.mac}')">${_Delete}</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+    
+    function showAddModal() {
+        const modal = document.getElementById('addModal');
+        modal.style.display = 'flex';
+        
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        
+        const whitelistMacs = whitelistData.list.map(u => u.mac);
+        const availableUsers = allUsers.filter(user => !whitelistMacs.includes(user.mac));
+        
+        if (availableUsers.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-state';
+            emptyMsg.innerHTML = _NoAvailableDevices;
+            userList.appendChild(emptyMsg);
+            return;
+        }
+        
+        availableUsers.forEach(user => {
+            const mac = user.mac || '';
+            let extraInfo = '';
+            
+            if (user.nickname && user.nickname.trim() !== '') {
+                extraInfo = user.nickname;
+            } else if (user.hostname && user.hostname.trim() !== '' && user.hostname !== '*') {
+                extraInfo = user.hostname;
+            } else if (user.ip && user.ip.trim() !== '') {
+                extraInfo = user.ip;
+            }
+            
+            const displayText = extraInfo ? `${mac} (${extraInfo})` : mac;
+            
+            const userElement = document.createElement('div');
+            userElement.className = 'user-item';
+            userElement.innerHTML = `
+                <input type="checkbox" value="${mac}" id="user_${mac.replace(/:/g, '_')}">
+                <div class="user-info">
+                    <div class="user-mac">${displayText}</div>
+                </div>
+            `;
+            userList.appendChild(userElement);
+        });
+    }
+    
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+    
+    function addSelectedUsers() {
+        const userList = document.getElementById('userList');
+        const checkboxes = userList.querySelectorAll('input[type="checkbox"]:checked');
+        
+        if (checkboxes.length === 0) {
+            showMessage(_PleaseSelectDevice);
+            return;
+        }
+        
+        const selectedMacs = Array.from(checkboxes).map(checkbox => checkbox.value);
+        
+        var data = {
+            mac_list: selectedMacs
+        };
+        
+        new XHR().post("<%=url('admin/hos/add_mac_filter_whitelist')%>", 
+            { data: JSON.stringify(data) },
+            function(x, data) {
+                closeAddModal();
+                getWhitelistData();
+                showMessage(_AddSuccess);
+            },
+            function(x, error) {
+                showMessage(_AddFailed);
+            }
+        );
+    }
+    
+    function removeWhitelistUser(mac) {
+        if (!confirm(_ConfirmRemove)) {
+            return;
+        }
+        
+        new XHR().post("<%=url('admin/hos/del_mac_filter_whitelist')%>", 
+            { mac: mac },
+            function(x, data) {
+                getWhitelistData();
+                showMessage(_DeleteSuccess);
+            },
+            function(x, error) {
+                showMessage(_DeleteFailed);
+            }
+        );
+    }
+    
+    function showMessage(message) {
+        const modal = document.getElementById('successMessage');
+        const messageElement = document.getElementById('successMessageText');
+        messageElement.textContent = message;
+        modal.style.display = 'flex';
+        
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 1500);
+    }
+    
+    window.onload = initData;
+//]]></script>
+
+<div class="cbi-section cbi-tblsection">
+    <div class="whitelist-container">
+        <div class="whitelist-title"><%:User Whitelist%></div>
+        
+        <button type="button" class="add-whitelist-btn" onclick="showAddModal()">+ <%:Add to Whitelist%></button>
+        
+        <table class="common-table whitelist-table">
+            <thead>
+                <tr>
+                    <th><%:No.%></th>
+                    <th><%:MAC Address%></th>
+                    <th><%:Hostname%></th>
+                    <th><%:Nickname%></th>
+                    <th><%:Operation%></th>
+                </tr>
+            </thead>
+            <tbody id="whitelistTableBody">
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px; color: #999;"><%:Loading...%></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="addModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content">
+        <div class="modal-header"><%:Add to Whitelist%></div>
+        <div class="user-list" id="userList">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" class="modal-btn modal-btn-primary" onclick="addSelectedUsers()"><%:OK%></button>
+            <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()"><%:Cancel%></button>
+        </div>
+    </div>
+</div>
+
+<div class="success-message" id="successMessage">
+    <div class="success-content">
+        <p id="successMessageText" style="margin: 0;"></p>
+    </div>
+</div>
+

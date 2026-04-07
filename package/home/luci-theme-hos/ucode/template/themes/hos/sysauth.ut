@@ -1,0 +1,350 @@
+{#
+    SPDX-License-Identifier: Apache-2.0
+    Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com>
+#}
+{%
+    import { access } from 'fs';
+    import { cursor } from 'uci';
+
+    let theme_mode = '1';
+    if (access('/etc/config/hos')) {
+        let cfg = cursor();
+        theme_mode = cfg.get_first('hos', 'global', 'theme_mode') || '0';
+    }
+-%}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>HOS</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <style>
+        :root {
+            --bg-body: #f3f5f7;
+            --bg-card: #fff;
+            --primary: #5e72e8;
+            --text-primary: #333;
+            --text-muted: #999;
+            --bg-input: #fff;
+            --border-input: #ddd;
+            --error-bg: #f8d7da;
+            --error-text: #721c23;
+            --error-border: #f5c6cb;
+            --popup-bg: #fff;
+            --popup-border: #ddd;
+            --shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        {% if (theme_mode == '0'): %}
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-body: #1e1e1e;
+                    --bg-card: #2d2d2d;
+                    --text-primary: #eee;
+                    --text-muted: #aaa;
+                    --bg-input: #333;
+                    --border-input: #555;
+                    --error-bg: #5a2a2a;
+                    --error-text: #ffb3b3;
+                    --error-border: #8a3c3c;
+                    --popup-bg: #333;
+                    --popup-border: #555;
+                    --shadow: 0 5px 20px rgba(0,0,0,0.3);
+                }
+            }
+        {% elif (theme_mode == '1'): %}
+            :root {
+                --bg-body: #1e1e1e;
+                --bg-card: #2d2d2d;
+                --text-primary: #eee;
+                --text-muted: #aaa;
+                --bg-input: #333;
+                --border-input: #555;
+                --error-bg: #5a2a2a;
+                --error-text: #ffb3b3;
+                --error-border: #8a3c3c;
+                --popup-bg: #333;
+                --popup-border: #555;
+                --shadow: 0 5px 20px rgba(0,0,0,0.3);
+            }
+        {% endif %}
+        body {
+            background: var(--bg-body);
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hos-login-card {
+            width: 320px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .hos-login-inner {
+            padding: 30px 10%;
+            box-sizing: border-box;
+        }
+        .hos-login-inner h1 {
+            text-align: center;
+            margin: 10px 0 30px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 36px;
+            cursor: pointer;
+            font-family: "TypoGraphica", "Google Sans", "Microsoft Yahei", "WenQuanYi Micro Hei", "sans-serif", "Helvetica Neue", "Helvetica", "Hiragino Sans GB";
+        }
+        .hos-login-form-group {
+            margin-bottom: 20px;
+        }
+        .hos-login-inner label {
+            display: block;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .hos-login-inner input {
+            width: 100%;
+            height: 40px;
+            padding: 0 10px;
+            border: 1px solid var(--border-input);
+            border-radius: 10px;
+            box-sizing: border-box;
+            transition: border-color .2s;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        .hos-login-inner input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .hos-login-inner input::placeholder {
+            color: var(--text-muted);
+            opacity: 1;
+        }
+        .hos-login-inner input:-webkit-autofill,
+        .hos-login-inner input:-webkit-autofill:hover,
+        .hos-login-inner input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text-primary);
+            -webkit-box-shadow: 0 0 0px 1000px var(--bg-input) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        .hos-login-btn {
+            width: 100%;
+            height: 40px;
+            padding: 0 10px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .hos-login-footer {
+            position: relative;
+            margin-top: 0;
+            text-align: center;
+        }
+        .hos-login-footer a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .hos-login-footer a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .hos-login-error {
+            margin-top: 10px;
+            padding: 12px;
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid var(--error-border);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .hos-qr-container {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--popup-bg);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .hos-qr-container img {
+            display: block;
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        .forgot-password-container {
+            text-align: right;
+            margin-top: 10px;
+            position: relative;
+        }
+        .powered-link {
+            color: var(--primary) !important;
+            font-size: 14px;
+        }
+        .forgot-password-trigger {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .forgot-password-trigger:hover {
+            text-decoration: underline;
+        }
+        .forgot-password-popup {
+            display: none;
+            background: var(--popup-bg);
+            border: 1px solid var(--popup-border);
+            border-radius: 10px;
+            padding: 12px 12px 8px 12px;
+            text-align: left;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: absolute;
+            bottom: 100%;
+            margin-bottom: 5px;
+            right: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .popup-content p,
+        .popup-content ol,
+        .popup-content li {
+            color: var(--text-primary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .popup-content p { margin: 0 0 5px; }
+        .popup-content ol {
+            margin: 0 0 8px;
+            padding-left: 0;
+            list-style-position: inside;
+        }
+        .popup-content li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hos-login-card">
+        <div class="hos-login-inner">
+            <h1 onclick="toggleWechatQR()">HOS</h1>
+            <form method="post">
+                <input type="hidden" name="luci_csrf_token" value="{{ csrf_token }}">
+                <div class="hos-login-form-group">
+                    <label for="luci_username">{{ _('Username') }}</label>
+                    <input type="text" name="luci_username" id="luci_username" value="{{ entityencode(duser, true) }}" autocomplete="username" placeholder="{{ _('Enter username') }}">
+                </div>
+                <div class="hos-login-form-group">
+                    <label for="luci_password">{{ _('Password') }}</label>
+                    <input type="password" name="luci_password" id="luci_password" autocomplete="current-password" placeholder="">
+                </div>
+                <div class="hos-login-footer">
+                    <a href="javascript:void(0)" onclick="toggleWechatQR()" class="powered-link">Powered by HOS 0595-85590055</a>
+                    <div id="hos-qr-container" class="hos-qr-container">
+                        <img src="/luci-static/resources/icons/WeChat.png" alt="QR code">
+                    </div>
+                </div>
+                <button type="submit" class="hos-login-btn">{{ _('Log in') }}</button>
+                <div class="forgot-password-container">
+                    <a href="javascript:void(0)" class="forgot-password-trigger" onclick="showForgotPassword(event)">{{ _('Forgot password?') }}</a>
+                    <div class="forgot-password-popup" id="forgot-password-popup">
+                        <div class="popup-content">
+                            <p>{{ _('Factory reset will lose current configuration and reset the password.') }}</p>
+                            <ol>
+                                <li>{{ _('Ensure the router is powered on.') }}</li>
+                                <li>{{ _('Press and hold the Reset button with a pin-like object for more than 5 seconds until the light turns off, then release to complete the factory reset.') }}</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            {% if (fuser): %}
+            <div class="hos-login-error">{{ _('Invalid username and/or password! Please try again.') }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        function toggleWechatQR() {
+            var container = document.getElementById('hos-qr-container');
+            if (container) {
+                if (container.style.display === 'block') {
+                    container.style.display = 'none';
+                } else {
+                    container.style.display = 'block';
+                    setTimeout(function() {
+                        document.addEventListener('click', closeWechatQROutside);
+                    }, 0);
+                }
+            }
+        }
+        function closeWechatQROutside(event) {
+            var container = document.getElementById('hos-qr-container');
+            var links = document.querySelectorAll('.powered-link, h1');
+            if (!container || container.style.display !== 'block') {
+                document.removeEventListener('click', closeWechatQROutside);
+                return;
+            }
+            var isLink = false;
+            for (var i = 0; i < links.length; i++) {
+                if (links[i].contains(event.target)) {
+                    isLink = true;
+                    break;
+                }
+            }
+            if (!container.contains(event.target) && !isLink) {
+                container.style.display = 'none';
+                document.removeEventListener('click', closeWechatQROutside);
+            }
+        }
+        function showForgotPassword(event) {
+            event.stopPropagation();
+            var popup = document.getElementById('forgot-password-popup');
+            if (popup.style.display === 'block') return;
+            popup.style.display = 'block';
+            setTimeout(function() {
+                document.addEventListener('click', closeForgotPasswordOnClickOutside);
+                document.addEventListener('keydown', closeForgotPasswordOnKey);
+            }, 0);
+        }
+        function closeForgotPassword() {
+            var popup = document.getElementById('forgot-password-popup');
+            if (popup.style.display === 'block') {
+                popup.style.display = 'none';
+                document.removeEventListener('click', closeForgotPasswordOnClickOutside);
+                document.removeEventListener('keydown', closeForgotPasswordOnKey);
+            }
+        }
+        function closeForgotPasswordOnClickOutside(event) {
+            var popup = document.getElementById('forgot-password-popup');
+            var link = document.querySelector('.forgot-password-trigger');
+            if (popup.contains(event.target) || link.contains(event.target)) return;
+            closeForgotPassword();
+        }
+        function closeForgotPasswordOnKey(event) {
+            var key = event.key || String.fromCharCode(event.keyCode || event.which);
+            if (key !== 'Escape') return;
+            closeForgotPassword();
+        }
+    </script>
+</body>
+</html>

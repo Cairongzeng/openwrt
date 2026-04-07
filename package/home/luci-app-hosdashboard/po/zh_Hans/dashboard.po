@@ -1,0 +1,188 @@
+msgid "Dashboard"
+msgstr "仪表板"
+
+msgid "Internet Status"
+msgstr "联网状态"
+
+msgid "Connected"
+msgstr "已联网"
+
+msgid "Disconnected"
+msgstr "未联网"
+
+msgid "No Cable"
+msgstr "未插网线"
+
+msgid "Dial Failed"
+msgstr "拨号失败"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "Online App"
+msgstr "在线APP"
+
+msgid "Online User"
+msgstr "在线用户"
+
+msgid "Connections"
+msgstr "连接数"
+
+msgid "Today Traffic"
+msgstr "今日流量"
+
+msgid "Traffic Statistics"
+msgstr "流量统计"
+
+msgid "Upload"
+msgstr "上传"
+
+msgid "Download"
+msgstr "下载"
+
+msgid "Active Apps"
+msgstr "活跃 APP"
+
+msgid "App Usage Distribution"
+msgstr "APP 使用时长分布"
+
+msgid "Last Hour"
+msgstr "近1小时"
+
+msgid "Today"
+msgstr "今日"
+
+msgid "User Traffic Top8"
+msgstr "用户流量Top8"
+
+msgid "Active Terminals Top8"
+msgstr "活跃终端Top8"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Upstream Rate"
+msgstr "上行速率"
+
+msgid "Downstream Rate"
+msgstr "下行速率"
+
+msgid "Upstream Traffic"
+msgstr "上行流量"
+
+msgid "Downstream Traffic"
+msgstr "下行流量"
+
+msgid "Current App"
+msgstr "当前APP"
+
+msgid "Current URL"
+msgstr "当前URL"
+
+msgid "System Info"
+msgstr "系统信息"
+
+msgid "Hostname"
+msgstr "主机名"
+
+msgid "Device Model"
+msgstr "设备型号"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "Firmware Version"
+msgstr "固件版本"
+
+msgid "Kernel Version"
+msgstr "内核版本"
+
+msgid "Uptime"
+msgstr "运行时间"
+
+msgid "Running Status"
+msgstr "运行状态"
+
+msgid "Memory"
+msgstr "内存"
+
+msgid "Network"
+msgstr "网络"
+
+msgid "Gateway"
+msgstr "网关"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "Mask"
+msgstr "掩码"
+
+msgid "Temperature"
+msgstr "温度"
+
+msgid "Temp Space"
+msgstr "临时空间"
+
+msgid "Disk Space"
+msgstr "磁盘空间"
+
+msgid "Boot Space"
+msgstr "Boot空间"
+
+msgid "Active URL"
+msgstr "活跃 URL"
+
+msgid "No Data"
+msgstr "没有数据"
+
+msgid "Total"
+msgstr "总计"
+
+msgid "Day"
+msgstr "天"
+
+msgid "Hour"
+msgstr "小时"
+
+msgid "Minute"
+msgstr "分"
+
+msgid "Upstream"
+msgstr "上行"
+
+msgid "Downstream"
+msgstr "下行"
+
+msgid "App ID"
+msgstr "APP ID"
+
+msgid "Access Time"
+msgstr "访问时间"
+
+msgid "Source IP"
+msgstr "源IP地址"
+
+msgid "Destination IP"
+msgstr "目的IP地址"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "Source Port"
+msgstr "源端口"
+
+msgid "Destination Port"
+msgstr "目的端口"
+
+msgid "Matched Domain"
+msgstr "匹配域名"
+
+msgid "IP Address"
+msgstr "IP地址"
+
+msgid "Storage Space"
+msgstr "磁盘空间"

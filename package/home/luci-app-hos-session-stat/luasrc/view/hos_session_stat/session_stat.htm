@@ -1,0 +1,338 @@
+<%+header%>
+<link rel="stylesheet" href="<%=resource%>/css/common.css">
+<script src="<%=resource%>/jquery-3.7.1.min.js"></script>
+<script src="<%=resource%>/echarts.min.js"></script>
+<script src="<%=resource%>/common.js"></script>
+
+<style>
+    .session-wrap {
+        padding: 8px;
+    }
+    .session-card {
+        border-radius: 8px;
+        padding: 14px;
+    }
+    .session-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .session-toolbar h3 {
+        margin: 0 0 0 70px;
+    }
+    .session-tabs {
+        display: flex;
+        gap: 8px;
+    }
+    .session-tab {
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .session-tab.active {
+        background: #3b82f6;
+        color: #fff;
+    }
+    .session-kpi {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 10px;
+        margin-left: 5%;
+        margin-right: 3%;
+        margin-bottom: 12px;
+    }
+    .session-kpi-item {
+        border-radius: 8px;
+        padding: 10px 12px;
+        text-align: center;
+    }
+    .session-kpi-label {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    .session-kpi-value {
+        font-size: 20px;
+        font-weight: 600;
+    }
+    #session-chart {
+        width: 100%;
+        height: 380px;
+    }
+</style>
+
+<div class="session-wrap">
+    <div class="session-card">
+        <div class="session-toolbar">
+            <h3><%:Session Statistics%></h3>
+            <div class="session-tabs">
+                <button class="session-tab active" id="session-tab-5min" data-range="5min" type="button"><%:Last 5 Minutes%></button>
+                <button class="session-tab" id="session-tab-hour" data-range="hour" type="button"><%:Last Hour%></button>
+                <button class="session-tab" id="session-tab-day" data-range="day" type="button"><%:Last 24 Hours%></button>
+            </div>
+        </div>
+        <div class="session-kpi">
+            <div class="session-kpi-item">
+                <div class="session-kpi-label"><%:Current Sessions%></div>
+                <div class="session-kpi-value" id="session-current">0</div>
+            </div>
+            <div class="session-kpi-item">
+                <div class="session-kpi-label"><%:Average Sessions%></div>
+                <div class="session-kpi-value" id="session-avg">0</div>
+            </div>
+            <div class="session-kpi-item">
+                <div class="session-kpi-label"><%:Peak Sessions%></div>
+                <div class="session-kpi-value" id="session-peak">0</div>
+            </div>
+        </div>
+        <div id="session-chart"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+(function() {
+    var currentRange = "5min";
+    var chart = echarts.init(document.getElementById("session-chart"));
+    var chartTheme = {};
+
+    function getCSSVariable(name, defaultValue) {
+        var root = document.documentElement;
+        var value = getComputedStyle(root).getPropertyValue(name).trim();
+        return value || defaultValue;
+    }
+
+    function getChartTheme() {
+        return {
+            axisLineColor: getCSSVariable("--chart-axis-line-color", "rgba(0,0,0,0.2)"),
+            axisLabelColor: getCSSVariable("--chart-axis-label-color", "#666666"),
+            splitLineColor: getCSSVariable("--chart-split-line-color", "rgba(0,0,0,0.08)"),
+            splitLineDashedColor: getCSSVariable("--chart-split-line-dashed-color", "rgba(0,0,0,0.15)"),
+            tooltipBg: getCSSVariable("--chart-tooltip-bg", "rgba(255,255,255,0.95)"),
+            tooltipText: getCSSVariable("--chart-tooltip-text", "#333333")
+        };
+    }
+
+    function initChart() {
+        chartTheme = getChartTheme();
+        chart.setOption({
+            animation: false,
+            animationDurationUpdate: 0,
+            color: ["#3b82f6"],
+            tooltip: {
+                trigger: "axis",
+                backgroundColor: chartTheme.tooltipBg,
+                textStyle: { color: chartTheme.tooltipText },
+                formatter: function(params) {
+                    if (!params || !params.length) return "";
+                    var p = params[0];
+                    if (p.data === null || p.data === undefined) return "";
+                    return p.axisValue + "<br/>" + "<%:Sessions%>: " + p.data;
+                }
+            },
+            grid: {
+                left: "5%",
+                right: "3%",
+                top: "8%",
+                bottom: "10%",
+                containLabel: true,
+                borderColor: chartTheme.axisLineColor,
+                borderWidth: 1
+            },
+            xAxis: {
+                type: "category",
+                boundaryGap: false,
+                data: [],
+                axisLabel: {
+                    color: chartTheme.axisLabelColor,
+                    showMinLabel: true,
+                    showMaxLabel: true
+                },
+                axisLine: { show: true, lineStyle: { color: chartTheme.axisLineColor } },
+                axisTick: { show: true, lineStyle: { color: chartTheme.axisLineColor } },
+                splitLine: { show: true, lineStyle: { color: chartTheme.splitLineColor } }
+            },
+            yAxis: {
+                type: "value",
+                minInterval: 1,
+                axisLabel: { color: chartTheme.axisLabelColor },
+                axisLine: { show: true, lineStyle: { color: chartTheme.axisLineColor } },
+                axisTick: { show: true, lineStyle: { color: chartTheme.axisLineColor } },
+                splitLine: { show: true, lineStyle: { color: chartTheme.splitLineDashedColor, type: "dashed" } }
+            },
+            series: [{
+                name: "<%:Sessions%>",
+                type: "line",
+                smooth: false,
+                symbol: "none",
+                data: [],
+                lineStyle: { width: 1.2 },
+                areaStyle: { opacity: 0.12 }
+            }]
+        });
+    }
+
+    function refreshChartTheme() {
+        chartTheme = getChartTheme();
+        chart.setOption({
+            tooltip: {
+                backgroundColor: chartTheme.tooltipBg,
+                textStyle: { color: chartTheme.tooltipText }
+            },
+            grid: {
+                borderColor: chartTheme.axisLineColor
+            },
+            xAxis: {
+                axisLabel: { color: chartTheme.axisLabelColor },
+                axisLine: { lineStyle: { color: chartTheme.axisLineColor } },
+                axisTick: { lineStyle: { color: chartTheme.axisLineColor } },
+                splitLine: { lineStyle: { color: chartTheme.splitLineColor } }
+            },
+            yAxis: {
+                axisLabel: { color: chartTheme.axisLabelColor },
+                axisLine: { lineStyle: { color: chartTheme.axisLineColor } },
+                axisTick: { lineStyle: { color: chartTheme.axisLineColor } },
+                splitLine: { lineStyle: { color: chartTheme.splitLineDashedColor, type: "dashed" } }
+            }
+        });
+    }
+
+    function setRangeTab(range) {
+        currentRange = range;
+        $(".session-tab").removeClass("active");
+        $(".session-tab[data-range='" + range + "']").addClass("active");
+    }
+
+    function getWindowLabel(resp) {
+        var minutes = parseInt((resp && resp.minutes) || 0, 10);
+        if (currentRange === "5min" || minutes === 5) return "5min";
+        if (minutes >= 24 * 60 || currentRange === "day") return "24h";
+        if (minutes >= 60 || currentRange === "hour") return "60min";
+        return String(minutes || 0) + "min";
+    }
+
+    function getWindowPointCount(resp) {
+        var minutes = parseInt((resp && resp.minutes) || 0, 10);
+        if (currentRange === "5min" || minutes === 5) return 60;      // 5s * 60
+        if (minutes >= 24 * 60 || currentRange === "day") return 1440; // 1min * 1440
+        return 60; // hour default
+    }
+
+    function rightAlignSeries(values, windowPoints) {
+        var out = new Array(windowPoints).fill(null);
+        var count = Math.min(values.length, windowPoints);
+        var start = windowPoints - count;
+        for (var i = 0; i < count; i++) {
+            out[start + i] = values[values.length - count + i];
+        }
+        return out;
+    }
+
+    function buildRelativeLabels(count, resp) {
+        if (count <= 0) return [];
+        if (count === 1) return ["0"];
+        var labels = new Array(count).fill("");
+        labels[0] = getWindowLabel(resp);
+        labels[count - 1] = "0";
+        return labels;
+    }
+
+    function buildTimeLabels(count, stepSeconds) {
+        if (count <= 0) return [];
+        var labels = new Array(count);
+        var nowMs = Date.now();
+        var stepMs = (stepSeconds || 60) * 1000;
+        var startMs = nowMs - (count - 1) * stepMs;
+        for (var i = 0; i < count; i++) {
+            var d = new Date(startMs + i * stepMs);
+            labels[i] = d.getHours() + ":" + d.getMinutes().toString().padStart(2, "0");
+        }
+        return labels;
+    }
+
+    function fetchSessionHistory() {
+        new XHR().get("<%=url('admin/session_stat_api/get_history_session')%>?range=" + currentRange, null, function(x, data) {
+            var resp = data || {};
+            try {
+                if (typeof resp === "string") resp = JSON.parse(resp);
+            } catch (e) {
+                resp = {};
+            }
+            var list = [];
+            if (Array.isArray(resp.list)) {
+                list = resp.list;
+            } else if (resp.list && typeof resp.list === "object") {
+                var keys = Object.keys(resp.list);
+                if (keys.length > 0) {
+                    list = keys.map(function(k) { return resp.list[k]; });
+                }
+            }
+            var labels = [];
+            var values = [];
+
+            list.forEach(function(item, idx) {
+                var value = (item && typeof item === "object") ? item.value : item;
+                values.push(parseInt(value || 0, 10));
+            });
+            var windowPoints = getWindowPointCount(resp);
+            var chartValues = rightAlignSeries(values, windowPoints);
+            if (currentRange === "day" || parseInt((resp && resp.minutes) || 0, 10) >= 24 * 60) {
+                labels = buildTimeLabels(chartValues.length, 60);
+            } else {
+                labels = buildRelativeLabels(chartValues.length, resp);
+            }
+            var axisInterval = 0;
+            if (chartValues.length > 0) {
+                axisInterval = Math.max(0, Math.ceil(chartValues.length / 12) - 1);
+            }
+
+            $("#session-current").text(parseInt(resp.current || 0, 10));
+            $("#session-avg").text(parseInt(resp.avg || 0, 10));
+            $("#session-peak").text(parseInt(resp.peak || 0, 10));
+
+            chart.setOption({
+                xAxis: {
+                    data: labels,
+                    axisLabel: { interval: axisInterval },
+                    axisTick: { interval: axisInterval },
+                    splitLine: { interval: axisInterval }
+                },
+                series: [{
+                    data: chartValues,
+                    smooth: (currentRange === "5min")
+                }]
+            });
+        });
+    }
+
+    $("#session-tab-5min").on("click", function() {
+        setRangeTab("5min");
+        fetchSessionHistory();
+    });
+    $("#session-tab-hour").on("click", function() {
+        setRangeTab("hour");
+        fetchSessionHistory();
+    });
+    $("#session-tab-day").on("click", function() {
+        setRangeTab("day");
+        fetchSessionHistory();
+    });
+
+    initChart();
+    fetchSessionHistory();
+    setInterval(fetchSessionHistory, 3000);
+    if (window.MutationObserver) {
+        var themeObserver = new MutationObserver(function() {
+            refreshChartTheme();
+        });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-darkmode"] });
+    }
+
+    window.addEventListener("resize", function() {
+        chart.resize();
+    });
+})();
+//]]>
+</script>
+<%+footer%>

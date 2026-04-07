@@ -1,0 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#ifndef __FWX_SYSTEM_H__
+#define __FWX_SYSTEM_H__
+
+#include <json-c/json.h>
+
+struct json_object *get_system_status(void);
+struct json_object *hos_api_get_system_info(struct json_object *req_obj);
+struct json_object *hos_api_set_system_info(struct json_object *req_obj);
+
+#endif

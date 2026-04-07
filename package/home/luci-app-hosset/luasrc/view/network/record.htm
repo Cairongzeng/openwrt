@@ -1,0 +1,338 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com> -->
+<%+header%>
+<script type="text/javascript" src="/luci-static/resources/jquery-3.7.1.min.js"></script>
+
+<div class="cbi-section cbi-tblsection">
+    <div style="max-width:1000px; margin:0 auto; padding:5px">
+        <div class="form-group">
+            <label for="rec-enable"><%:Enable%></label>
+            <label class="switch">
+                <input type="checkbox" id="rec-enable" name="rec-enable">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="form-group" id="data-size-group" style="display:none">
+            <label><%:History Data Usage%></label>
+            <div style="display:flex; align-items:center; gap:50px">
+                <span id="data-size-display"></span>
+                <button type="button" id="clean-btn" class="clean-button" onclick="cleanAllData()">清空</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="rec-keep"><%:Record Time%></label>
+            <select id="rec-keep" name="rec-keep">
+                <option value="1">1 <%:days%></option>
+                <option value="2">2 <%:days%></option>
+                <option value="3">3 <%:days%></option>
+                <option value="4">4 <%:days%></option>
+                <option value="5">5 <%:days%></option>
+                <option value="6">6 <%:days%></option>
+                <option value="7">7 <%:days%></option>
+                <option value="10">10 <%:days%></option>
+                <option value="15">15 <%:days%></option>
+                <option value="30">30 <%:days%></option>
+            </select>
+        </div>
+        <div class="desc"><span><%:Internet record retention time%></span></div>
+
+        <div class="form-group">
+            <label for="rec-valid"><%:App Valid Time%></label>
+            <select id="rec-valid" name="rec-valid">
+                <option value="1">1 <%:minutes%></option>
+                <option value="2">2 <%:minutes%></option>
+                <option value="3">3 <%:minutes%></option>
+                <option value="4">4 <%:minutes%></option>
+                <option value="5">5 <%:minutes%></option>
+                <option value="10">10 <%:minutes%></option>
+                <option value="15">15 <%:minutes%></option>
+                <option value="20">20 <%:minutes%></option>
+                <option value="30">30 <%:minutes%></option>
+                <option value="60">60 <%:minutes%></option>
+            </select>
+        </div>
+        <div class="desc"><span><%:App records minimum duration%></span></div>
+
+        <div class="form-group">
+            <label for="rec-history-size"><%:History Data Size%></label>
+            <input type="text" id="rec-history-size" name="rec-history-size">
+        </div>
+        <div class="desc"><span><%:History data size limit (1-1024MB)%></span></div>
+
+        <div class="form-group">
+            <label for="rec-history-path"><%:History Data Path%></label>
+            <input type="text" id="rec-history-path" name="rec-history-path">
+        </div>
+        <div class="desc"><span><%:History data storage directory (cannot be empty or /, max length 64)%></span></div>
+
+        <div class="button-container" style="margin-top:20px; margin-bottom:50px">
+            <button type="button" id="save-btn" class="save-button" onclick="submitHandle()"><%:Save%></button>
+        </div>
+    </div>
+</div>
+
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center">
+    <div style="background-color:rgba(0,0,0,0.5); padding:10px; border-radius:5px; text-align:center; width:100px; height:70px; color:white; display:flex; justify-content:center; align-items:center">
+        <p id="modal-msg" style="margin:0; color:white"></p>
+    </div>
+</div>
+
+<style>
+body {
+    font-family: "Source Han Sans CN", "思源黑体", "Noto Sans CJK SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.button-container {
+    display: flex;
+    justify-content: right;
+    margin-top: 5px;
+}
+.save-button {
+    width: 80px;
+    height: 30px;
+    background-color: #5c9bd5;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-block;
+    line-height: 30px;
+    text-align: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+.save-button:hover {
+    background-color: #4a8ac2;
+}
+.clean-button {
+    height: 24px;
+    padding: 0 12px;
+    background-color: #5c9bd5;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: normal;
+}
+.clean-button:hover {
+    background-color: #4a8ac2;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 20px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #5c9bd5;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+.desc {
+    margin-top: 10px;
+    width: 650px;
+}
+.desc span {
+    margin-top: 5px;
+    font-size: 13px;
+    color: rgb(129, 129, 129);
+}
+.form-group {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+}
+.form-group > label:first-of-type {
+    margin-right: 10px;
+    width: 150px;
+}
+.form-group input[type="text"] {
+    padding: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    border: 1px solid #bfbfbf;
+    width: 200px;
+    box-sizing: border-box;
+}
+.form-group select {
+    width: 200px;
+    padding: 5px;
+    border: 1px solid #bfbfbf;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+@media screen and (max-width: 600px) {
+    .form-group {
+        flex-wrap: wrap;
+    }
+    .form-group > label:first-of-type {
+        width: 100%;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+    .form-group input[type="text"],
+    .form-group select {
+        width: 100% !important;
+    }
+    .desc {
+        width: auto;
+        margin-top: 10px;
+    }
+    .button-container {
+        margin-bottom: 10px;
+    }
+}
+</style>
+
+<script>
+function showModalTip(msg, ok) {
+    var $modal = $('#modal');
+    var $msg = $('#modal-msg');
+    if (!$modal.length || !$msg.length) return;
+    $msg.text(msg || '');
+    $msg.css('color', ok ? '#0abf5b' : '#f87171');
+    $modal.css('display', 'flex');
+    setTimeout(function() {
+        $modal.css('display', 'none');
+    }, 2000);
+}
+
+function loadConfig() {
+    $.get('<%=url("admin/internet_record/get_record_base")%>', function(resp) {
+        if (resp && resp.data) {
+            $('#rec-enable').prop('checked', resp.data.enable == 1);
+            $('#rec-keep').val(resp.data.record_time || 0);
+            $('#rec-valid').val(resp.data.app_valid_time || 0);
+            $('#rec-history-size').val(resp.data.history_data_size || '');
+            $('#rec-history-path').val(resp.data.history_data_path || '');
+            
+            if (resp.data.status && resp.data.status.data_size !== undefined) {
+                var dataSize = resp.data.status.data_size || 0;
+                var unit = resp.data.status.data_size_unit || 'KB';
+                var displayText = '';
+                if (unit === 'KB') {
+                    if (dataSize >= 1024) {
+                        var mb = dataSize / 1024;
+                        displayText = (mb % 1 === 0 ? mb.toFixed(0) : mb.toFixed(1)) + 'MB';
+                    } else {
+                        displayText = dataSize + 'KB';
+                    }
+                } else {
+                    displayText = dataSize + unit;
+                }
+                $('#data-size-display').text(displayText);
+                $('#data-size-group').show();
+            } else {
+                $('#data-size-group').hide();
+            }
+        }
+    });
+}
+
+function submitRecordBase() {
+    var enable = $('#rec-enable').is(':checked') ? 1 : 0;
+    var keep = parseInt($('#rec-keep').val(), 10) || 0;
+    var valid = parseInt($('#rec-valid').val(), 10) || 0;
+    var history_size = $('#rec-history-size').val().trim();
+    var history_path = $('#rec-history-path').val().trim();
+
+    if (history_size) {
+        var size_num = parseInt(history_size, 10);
+        if (isNaN(size_num) || size_num < 1 || size_num > 1024 || size_num != parseFloat(history_size)) {
+            showModalTip('<%:History data size must be an integer between 1 and 1024 MB%>', false);
+            return;
+        }
+    }
+    if (!history_path || history_path === '/') {
+        showModalTip('<%:History data path cannot be empty or /%>', false);
+        return;
+    }
+    if (history_path.length > 64) {
+        showModalTip('<%:History data path maximum length is 64 characters%>', false);
+        return;
+    }
+
+    $.post('<%=url("admin/internet_record/set_record_base")%>', {
+        enable: enable,
+        record_time: keep,
+        app_valid_time: valid,
+        history_data_size: history_size,
+        history_data_path: history_path
+    }, function(resp) {
+        if (resp && (resp.code === 0 || resp.code === 2000)) {
+            showModalTip('<%:Saved successfully%>', true);
+        } else {
+            var error_msg = resp && resp.msg ? resp.msg : '<%:Save failed%>';
+            showModalTip(error_msg, false);
+        }
+    }).fail(function() {
+        showModalTip('<%:Save failed%>', false);
+    });
+}
+
+function submitHandle() {
+    submitRecordBase();
+}
+
+function cleanAllData() {
+    if (!confirm('<%:Are you sure you want to clean all history data? This action cannot be undone.%>')) {
+        return;
+    }
+    
+    $.post('<%=url("admin/internet_record/record_action")%>', {
+        action: 'clean_all_data'
+    }, function(resp) {
+        if (resp && (resp.code === 0 || resp.code === 2000)) {
+            showModalTip('<%:Data cleaned successfully%>', true);
+            setTimeout(function() {
+                loadConfig();
+            }, 1000);
+        } else {
+            showModalTip('<%:Clean failed%>', false);
+        }
+    }).fail(function() {
+        showModalTip('<%:Clean failed%>', false);
+    });
+}
+
+$(function() {
+    loadConfig();
+});
+</script>
+
+<%+footer%>

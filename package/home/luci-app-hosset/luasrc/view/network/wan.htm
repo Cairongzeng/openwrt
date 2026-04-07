@@ -1,0 +1,352 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com> -->
+<%+header%>
+<script src="/luci-static/resources/jquery-3.7.1.min.js"></script>
+<script src="/luci-static/resources/common.js"></script>
+
+<style>
+.app-form-card input[type="text"],
+.app-form-card input[type="password"],
+.app-form-card select {
+    width: 200px !important;
+    box-sizing: border-box;
+}
+.app-form-card .form-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+.app-form-card .form-desc {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+.app-form-card .form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+.app-form-card .form-label {
+    width: 140px;
+    font-weight: 500;
+    color: inherit;
+}
+button#wan-save {
+    width: 80px !important;
+    height: 30px !important;
+    background-color: #5c9bd5 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 30px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#wan-save:hover {
+    background-color: #4a8ac2 !important;
+}
+button#wan-refresh {
+    width: 80px !important;
+    height: 30px !important;
+    background: transparent !important;
+    border: 1px solid #5c9bd5 !important;
+    color: #5c9bd5 !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    line-height: 28px !important;
+    text-align: center;
+    padding: 0 12px !important;
+    box-sizing: border-box;
+}
+button#wan-refresh:hover {
+    background: #e6f0ff !important;
+    border-color: #4a8ac2 !important;
+    color: #4a8ac2 !important;
+}
+@media screen and (max-width: 600px) {
+    .form-row {
+        flex-wrap: wrap;
+    }
+    .form-label {
+        width: 100%;
+        margin-bottom: 5px;
+        text-align: left;
+    }
+    .app-form-card input[type="text"],
+    .app-form-card input[type="password"],
+    .app-form-card select {
+        width: 100% !important;
+        max-width: none;
+        box-sizing: border-box;
+    }
+    .button-container {
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+    }
+}
+body {
+    font-family: "Source Han Sans CN", "思源黑体", "Noto Sans CJK SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+</style>
+
+<div class="app-form-card" style="max-width: 1000px; margin:0 auto; padding:5px">
+    <div class="form-title"><%:WAN Setting%></div>
+    <div class="form-desc"><%:Configure default WAN interface%></div>
+    <div class="form-row">
+        <label class="form-label"><%:Protocol%></label>
+        <select id="wan-proto">
+            <option value="dhcp"><%:DHCP%></option>
+            <option value="static"><%:Static%></option>
+            <option value="pppoe"><%:PPPoE%></option>
+        </select>
+    </div>
+    <div id="wan-static-config">
+        <div class="form-row">
+            <label class="form-label"><%:IP Address%></label>
+            <div style="padding:0">
+                <input id="wan-ip" type="text" placeholder="">
+                <div class="error-msg" id="wan-ip-error" style="padding:0"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label"><%:Netmask%></label>
+            <div style="padding:0">
+                <input id="wan-mask" type="text" placeholder="">
+                <div class="error-msg" id="wan-mask-error" style="padding:0"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label"><%:Gateway%></label>
+            <div style="padding:0">
+                <input id="wan-gw" type="text" placeholder="">
+                <div class="error-msg" id="wan-gw-error" style="padding:0"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">DNS1</label>
+            <div style="padding:0">
+                <input id="wan-dns1" type="text" placeholder="">
+                <div class="error-msg" id="wan-dns1-error" style="padding:0"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">DNS2</label>
+            <div style="padding:0">
+                <input id="wan-dns2" type="text" placeholder="" disabled>
+                <div class="error-msg" id="wan-dns2-error" style="padding:0"></div>
+            </div>
+        </div>
+    </div>
+    <div id="wan-pppoe-config" style="padding:0">
+        <div class="form-row">
+            <label class="form-label"><%:Username%></label>
+            <div style="display: flex; flex-direction: column; padding:0">
+                <input id="wan-username" type="text" placeholder="" maxlength="64">
+                <div class="error-msg" id="wan-username-error" style="padding:0"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label"><%:Password%></label>
+            <div style="display: flex; flex-direction: column; padding:0">
+                <input id="wan-password" type="password" placeholder="" maxlength="64">
+                <div class="error-msg" id="wan-password-error" style="padding:0"></div>
+            </div>
+        </div>
+    </div>
+    <div class="button-container" style="margin-top:20px; margin-bottom:50px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="wan-refresh"><%:Refresh%></button>
+        <button id="wan-save"><%:Save%></button>
+    </div>
+    <div class="status-tip" id="wan-tip"></div>
+</div>
+
+<script>
+(function(){
+    var _SavedSuccessfully = '<%:Saved successfully%>';
+    var _SaveFailed = '<%:Save failed%>';
+    var _Loading = '<%:Loading...%>';
+    var _LoadFailed = '<%:Load failed%>';
+    var _InvalidIP = '<%:Invalid IP address%>';
+    var _InvalidNetmask = '<%:Invalid netmask%>';
+    var _InvalidGateway = '<%:Invalid gateway%>';
+    var _InvalidDNS = '<%:Invalid DNS address%>';
+    var _DNS1Required = '<%:DNS1 must be set before DNS2%>';
+    var _UsernameRequired = '<%:Username is required%>';
+    var _PasswordRequired = '<%:Password is required%>';
+    
+    const apiGet = '<%=url("admin/network/get_wan_info")%>';
+    const apiSet = '<%=url("admin/network/set_wan_info")%>';
+    
+    function showModal(msg, ok) {
+        if (ok) {
+            showCommonModal(msg, 2000, 'success');
+        } else {
+            showCommonModal(msg, 2000, 'error');
+        }
+    }
+    
+    function showError(fieldId, errorMsg) {
+        $('#' + fieldId + '-error').text(errorMsg).show();
+        $('#' + fieldId).css('border-color', '#f87171');
+    }
+    
+    function clearError(fieldId) {
+        $('#' + fieldId + '-error').hide();
+        $('#' + fieldId).css('border-color', '');
+    }
+    
+    function validateField(fieldId, validator, errorMsg) {
+        const value = $('#' + fieldId).val();
+        if (value && !validator(value)) {
+            showError(fieldId, errorMsg);
+            return false;
+        } else {
+            clearError(fieldId);
+            return true;
+        }
+    }
+    
+    function validateRequired(fieldId, errorMsg) {
+        const value = $('#' + fieldId).val();
+        if (!value || value.trim() === '') {
+            showError(fieldId, errorMsg);
+            return false;
+        } else {
+            clearError(fieldId);
+            return true;
+        }
+    }
+    
+    function toggleConfigSections() {
+        const proto = $('#wan-proto').val();
+        if (proto === 'static') {
+            $('#wan-static-config').show();
+            $('#wan-pppoe-config').hide();
+        } else if (proto === 'pppoe') {
+            $('#wan-static-config').hide();
+            $('#wan-pppoe-config').show();
+        } else {
+            $('#wan-static-config').hide();
+            $('#wan-pppoe-config').hide();
+        }
+    }
+    
+    function toggleDNS2() {
+        const dns1 = $('#wan-dns1').val();
+        if (dns1 && dns1.trim() !== '') {
+            $('#wan-dns2').prop('disabled', false);
+            clearError('wan-dns2');
+        } else {
+            $('#wan-dns2').prop('disabled', true).val('');
+            clearError('wan-dns2');
+        }
+    }
+    
+    function render(data) {
+        const d = (data && data.data) || {};
+        $('#wan-proto').val(d.proto || 'dhcp');
+        $('#wan-ip').val(d.ipaddr || '');
+        $('#wan-mask').val(d.netmask || '');
+        $('#wan-gw').val(d.gateway || '');
+        $('#wan-dns1').val(d.dns1 || '');
+        $('#wan-dns2').val(d.dns2 || '');
+        $('#wan-username').val(d.username || '');
+        $('#wan-password').val(d.password || '');
+        toggleConfigSections();
+        toggleDNS2();
+    }
+    
+    function refresh() {
+        $('#wan-tip').text(_Loading);
+        $.getJSON(apiGet, function(resp){
+            render(resp);
+            $('#wan-tip').text('');
+        }).fail(function(){
+            $('#wan-tip').text(_LoadFailed);
+        });
+    }
+    
+    function save() {
+        const proto = $('#wan-proto').val();
+        let isValid = true;
+        if (proto === 'static') {
+            isValid = validateField('wan-ip', validateIP, _InvalidIP) && isValid;
+            isValid = validateField('wan-mask', validateNetmask, _InvalidNetmask) && isValid;
+            isValid = validateField('wan-gw', validateIP, _InvalidGateway) && isValid;
+            isValid = validateField('wan-dns1', validateIP, _InvalidDNS) && isValid;
+            
+            const dns1 = $('#wan-dns1').val();
+            const dns2 = $('#wan-dns2').val();
+            if ((!dns1 || dns1.trim() === '') && dns2 && dns2.trim() !== '') {
+                showError('wan-dns2', _DNS1Required);
+                isValid = false;
+            } else {
+                isValid = validateField('wan-dns2', validateIP, _InvalidDNS) && isValid;
+            }
+        } else if (proto === 'pppoe') {
+            isValid = validateRequired('wan-username', _UsernameRequired) && isValid;
+            isValid = validateRequired('wan-password', _PasswordRequired) && isValid;
+        }
+        if (!isValid) {
+            return;
+        }
+        const payload = {
+            proto: proto
+        };
+        if (proto === 'static') {
+            payload.ipaddr = $('#wan-ip').val();
+            payload.netmask = $('#wan-mask').val();
+            payload.gateway = $('#wan-gw').val();
+            payload.dns1 = $('#wan-dns1').val();
+            payload.dns2 = $('#wan-dns2').val();
+        } else if (proto === 'pppoe') {
+            payload.username = $('#wan-username').val();
+            payload.password = $('#wan-password').val();
+        }
+        $('#wan-save').prop('disabled', true);
+        $.ajax({
+            url: apiSet,
+            method: 'POST',
+            data: payload
+        }).done(function(resp){
+            if (resp && (resp.code === 0 || resp.code === 2000)) {
+                showModal(_SavedSuccessfully, true);
+                refresh();
+            } else {
+                showModal(_SaveFailed, false);
+            }
+        }).fail(function(){
+            showModal(_SaveFailed, false);
+        }).always(function(){
+            $('#wan-save').prop('disabled', false);
+        });
+    }
+    
+    $('#wan-proto').on('change', toggleConfigSections);
+    $('#wan-ip').on('blur', function() { validateField('wan-ip', validateIP, _InvalidIP); });
+    $('#wan-mask').on('blur', function() { validateField('wan-mask', validateNetmask, _InvalidNetmask); });
+    $('#wan-gw').on('blur', function() { validateField('wan-gw', validateIP, _InvalidGateway); });
+    $('#wan-dns1').on('blur', function() {
+        validateField('wan-dns1', validateIP, _InvalidDNS);
+        toggleDNS2();
+    });
+    $('#wan-dns2').on('blur', function() { validateField('wan-dns2', validateIP, _InvalidDNS); });
+    $('#wan-username').on('blur', function() { validateRequired('wan-username', _UsernameRequired); });
+    $('#wan-password').on('blur', function() { validateRequired('wan-password', _PasswordRequired); });
+    $('#wan-refresh').on('click', refresh);
+    $('#wan-save').on('click', save);
+    $(refresh);
+})();
+</script>
+
+<%+footer%>

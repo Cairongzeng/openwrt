@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set_opt() {
+        local key=$1
+        local val=$2
+        uci set "luci.$key=$val"
+}
+
+set_opt themes.HomeOS /luci-static/homeos
+set_opt main.mediaurlbase /luci-static/homeos
+
+uci commit luci
+exit 0

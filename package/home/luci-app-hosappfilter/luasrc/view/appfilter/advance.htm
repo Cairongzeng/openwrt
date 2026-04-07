@@ -1,0 +1,170 @@
+<link rel="stylesheet" href="<%=resource%>/css/common.css">
+<style>
+    .desc {
+        margin-top: 10px;
+        width: 650px;
+    }
+    .desc span {
+        margin-top: 5px;
+        font-size: 13px;
+        color: gray;
+    }
+    .form-group {
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .form-group > label:first-of-type {
+        margin-right: 10px;
+        width: 150px;
+    }
+    .form-group input[type="text"] {
+        padding: 5px;
+        background-color: #1e1e1e;
+        color: #ffffff;
+        border: 1px solid #555;
+        width: 200px;
+        border-radius: 3px;
+    }
+    .form-group .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    .form-group .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .form-group .switch .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 20px;
+    }
+    .form-group .switch .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    .form-group .switch input:checked + .slider {
+        background-color: #2196F3;
+    }
+    .form-group .switch input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+</style>
+
+<script type="text/javascript">//<![CDATA[
+    var _EnableAppFilter = '<%:Enable App Filter%>';
+    var _LANInterface = '<%:LAN Interface%>';
+    var _Save = '<%:Save%>';
+    var _SettingsSaved = '<%:Settings saved successfully%>';
+    var _InvalidLANInterface = '<%:Invalid LAN interface name%>';
+    
+    function init_data() {
+        getAppFilterAdvData(); 
+    }
+    
+    function showSuccessMessage(message) {
+        message = message || _SettingsSaved;
+        const modal = document.getElementById('modal');
+        const messageElement = modal.querySelector('p');
+        messageElement.textContent = message;
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 2000);
+    }
+
+    function validateLanIfname(lanIfname) {
+        if (!lanIfname || lanIfname.trim() === '') {
+            return false;
+        }
+        const regex = /^[a-zA-Z0-9-]{2,16}$/;
+        return regex.test(lanIfname);
+    }
+
+    function submitAppFilterAdv() {
+        const enable = document.getElementById('enableSwitch').checked ? 1 : 0;
+        const lanIfname = document.getElementById('lan_ifname').value.trim();
+
+        if (!validateLanIfname(lanIfname)) {
+            alert(_InvalidLANInterface + ': ' + _LANInterface);
+            return;
+        }
+
+        new XHR().post('<%=url('admin/network/set_app_filter_adv')%>', {
+            enable: enable,
+            lan_ifname: lanIfname
+        },
+        function (x, data) {
+            if (data && data.code === 0) {
+                showSuccessMessage();
+            } 
+        });
+    }
+ 
+    function submitHandle() {
+        submitAppFilterAdv();
+    }
+
+    function getAppFilterAdvData() {
+        new XHR().get('<%=url('admin/network/get_app_filter_adv')%>', null,
+            function (x, data) {
+                if (data && data.code === 0 && data.data) {
+                    if (data.data.enable == 1) {
+                        document.getElementById('enableSwitch').checked = true;
+                    } else {
+                        document.getElementById('enableSwitch').checked = false;
+                    }
+                    
+                }
+            }
+        );
+    }
+
+    window.onload = function() {
+        init_data();
+    };
+//]]></script>
+
+<div id="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background-color: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 5px; text-align: center; width: 100px; height: 70px; color: white; display: flex; justify-content: center; align-items: center;">
+        <p style="margin: 0;color: white;">设置成功</p>
+    </div>
+</div>
+
+<div class="cbi-section cbi-tblsection">
+    <div style="max-width: 1000px; margin-left: 10px; padding: 5px;">
+        <div class="form-group">
+            <label for="enableSwitch"><%:Enable App Filter%></label>
+            <label class="switch">
+                <input type="checkbox" id="enableSwitch" name="enableSwitch" />
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="desc">
+            <span><%:Enable or disable the application filter feature.%></span>
+        </div>
+
+
+        <div class="button-container" style="margin-top: 20px;">
+            <button type="button" class="submit-button" onclick="submitHandle()"><%:Save%></button>
+        </div>
+    </div>
+</div>

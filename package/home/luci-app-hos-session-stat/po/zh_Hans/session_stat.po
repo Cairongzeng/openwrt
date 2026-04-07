@@ -1,0 +1,30 @@
+msgid "Monitor"
+msgstr "监控"
+
+msgid "System Monitor"
+msgstr "系统监控"
+
+msgid "Session Statistics"
+msgstr "会话统计"
+
+msgid "Last 5 Minutes"
+msgstr "最近5分钟"
+
+msgid "Last Hour"
+msgstr "最近1小时"
+
+msgid "Last 24 Hours"
+msgstr "最近24小时"
+
+msgid "Current Sessions"
+msgstr "当前会话数"
+
+msgid "Average Sessions"
+msgstr "平均会话数"
+
+msgid "Peak Sessions"
+msgstr "峰值会话数"
+
+msgid "Sessions"
+msgstr "会话数"
+

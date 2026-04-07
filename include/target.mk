@@ -50,14 +50,32 @@ DEFAULT_PACKAGES.nas:=\
 # @brief Default packages for @DEVICE_TYPE router.
 ##
 DEFAULT_PACKAGES.router:=\
-	dnsmasq \
+	dnsmasq-full \
 	firewall4 \
 	nftables \
 	kmod-nft-offload \
 	odhcp6c \
 	odhcpd-ipv6only \
 	ppp \
-	ppp-mod-pppoe
+	ppp-mod-pppoe \
+	hosd \
+	kmod-hos \
+	libhos_common \
+	luci-theme-homeos \
+	luci-app-hosappfilter \
+	luci-app-hosdashboard \
+	luci-app-hosfeature \
+	luci-app-hosmacfilter \
+	luci-app-hosset \
+	luci-app-hosclient \
+	luci-app-hos-session-stat \
+	luci-app-hos-user-record \
+	kmod-nf-nathelper  \
+	kmod-nf-nathelper-extra  \
+	kmod-ipt-raw \
+	kmod-nf-conntrack-netlink \
+	ipset  \
+	ip-full
 
 ifneq ($(DUMP),)
   all: dumpinfo
@@ -317,9 +335,6 @@ ifeq ($(DUMP),1)
     ifneq ($(CONFIG_PWM),)
       FEATURES += pwm
     endif
-    ifneq ($(CONFIG_REGULATOR),)
-      FEATURES += regulator
-    endif
     ifneq ($(CONFIG_USB)$(CONFIG_USB_SUPPORT),)
       ifneq ($(CONFIG_USB_ARCH_HAS_HCD)$(CONFIG_USB_EHCI_HCD),)
         FEATURES += usb
@@ -362,7 +377,7 @@ endif
 
 define BuildTargets/DumpCurrent
   .PHONY: dumpinfo
-  dumpinfo: $(call shexport,Target/Description)
+  dumpinfo : export DESCRIPTION=$$(Target/Description)
   dumpinfo:
 	@echo 'Target: $(TARGETID)'; \
 	 echo 'Target-Board: $(BOARD)'; \
@@ -379,7 +394,7 @@ define BuildTargets/DumpCurrent
 	 echo 'Linux-Kernel-Arch: $(LINUX_KARCH)'; \
 	$(if $(SUBTARGET),,$(if $(DEFAULT_SUBTARGET), echo 'Default-Subtarget: $(DEFAULT_SUBTARGET)'; )) \
 	 echo 'Target-Description:'; \
-	 echo "$$$$$(call shvar,Target/Description);"; \
+	 echo "$$$$DESCRIPTION"; \
 	 echo '@@'; \
 	 $(if $(DEFAULT_PROFILE),echo 'Target-Default-Profile: $(DEFAULT_PROFILE)';) \
 	 echo 'Default-Packages: $(DEFAULT_PACKAGES)'; \

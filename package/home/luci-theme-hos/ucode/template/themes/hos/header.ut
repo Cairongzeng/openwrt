@@ -1,0 +1,232 @@
+{# SPDX-License-Identifier: Apache-2.0 #}
+{#
+    Copyright (C) 2025 jerrykuku
+    Copyright (C) 2025-2026 Rongzeng Cai <cairongzeng@outlook.com>
+#}
+{%
+	import { readfile, access } from 'fs';
+	import { cursor } from 'uci';
+
+	const boardinfo = ubus.call("system", "board");
+	const hostname = striptags(boardinfo?.hostname ?? '?');
+
+	http.prepare_content('text/html; charset=UTF-8');
+
+	let theme_mode = '1';
+	if (access('/etc/config/hos')) {
+		let cfg = cursor();
+		theme_mode = cfg.get_first('hos', 'global', 'theme_mode') || '1';
+	}
+
+	let media_fs = '/www' + media;
+	let dark_css = '';
+	if (access(media_fs + '/css/dark.css')) {
+		dark_css = readfile(media_fs + '/css/dark.css') || '';
+	}
+-%}
+<!DOCTYPE html>
+<html lang="{{ dispatcher.lang }}">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>{{ hostname }}{{ node?.title ? ` - ${striptags(node.title)}` : '' }} - LuCI</title>
+
+	<meta name="robots" content="noindex, nofollow">
+	<meta http-equiv="X-Content-Type-Options" content="nosniff">
+	<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+	<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+
+	<meta name="format-detection" content="telephone=no, email=no">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="{{ hostname }} - LuCI">
+
+	<meta name="msapplication-TileImage" content="{{ media }}/icon/ms-icon-144x144.png">
+	<meta name="application-name" content="{{ hostname }} - LuCI">
+
+	<link rel="icon" type="image/x-icon" href="{{ media }}/favicon.ico">
+	<link rel="icon" type="image/png" sizes="16x16" href="{{ media }}/icon/favicon-16x16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="{{ media }}/icon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="{{ media }}/icon/favicon-96x96.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="{{ media }}/icon/android-icon-192x192.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="{{ media }}/icon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="{{ media }}/icon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="{{ media }}/icon/apple-icon-144x144.png">
+	<link rel="manifest" href="{{ media }}/icon/manifest.json" crossorigin="use-credentials">
+
+	<link rel="stylesheet" href="{{ media }}/css/cascade.css">
+	<style title="text/css">
+		{% if (theme_mode == '0'): %}
+			@media (prefers-color-scheme: dark) {
+				{{ dark_css }}
+			}
+		{% endif %}
+		{% if (theme_mode == '1'): %}
+			{{ dark_css }}
+		{% endif %}
+		.theme-toggle-icon {
+			cursor: pointer;
+			font-size: 1rem;
+			margin-left: 0.5rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 1.8rem;
+			height: 1.8rem;
+			border-radius: 50%;
+			background-color: transparent;
+			transition: background-color 0.2s;
+			text-decoration: none;
+		}
+		.theme-toggle-icon:hover {
+			background-color: transparent;
+			text-decoration: none;
+		}
+		#header-qr-popup {
+			display: none;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background: var(--bg-card, #fff);
+			padding: 10px;
+			border-radius: 10px;
+			box-shadow: var(--shadow-modal, 0 5px 20px rgba(0,0,0,0.1));
+			z-index: 10000;
+			text-align: center;
+		}
+		#header-qr-popup img {
+			display: block;
+			width: 180px;
+			height: 180px;
+			object-fit: contain;
+			border-radius: 10px;
+		}
+	</style>
+	{% if (node?.css): %}
+	<link rel="stylesheet" href="{{ resource }}/{{ node.css}}">
+	{% endif %}
+	{% if (css): %}
+	<style title="text/css">
+		{{ css }}
+	</style>
+	{% endif %}
+	<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}?v={{ version.luciversion }}"></script>
+	<script src="{{ resource }}/cbi.js?v={{ version.luciversion }}"></script>
+	<script src="{{ resource }}/luci.js?v={{ version.luciversion }}"></script>
+</head>
+
+<body
+	class="lang_{{ dispatcher.lang }} {{ node?.title ? ` - ${striptags(node.title)}` : '' }} {% if (ctx.authsession): %}logged-in{% endif %}"
+	data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
+
+	<div class="main">
+		<div class="main-left" id="mainmenu" style="display:none">
+			<div class="sidenav-header d-flex align-items-center">
+				<a class="brand" href="javascript:void(0)">{{ hostname }}</a>
+				<div class="ml-auto">
+					<div class="sidenav-toggler d-none d-xl-block active" data-action="sidenav-unpin"
+						data-target="#sidenav-main">
+						<div class="sidenav-toggler-inner">
+							<i class="sidenav-toggler-line"></i>
+							<i class="sidenav-toggler-line"></i>
+							<i class="sidenav-toggler-line"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="main-right">
+			<header class="bg-primary">
+				<div class="fill">
+					<div class="container">
+						<div class="flex1">
+							<a class="showSide"></a>
+							<a class="brand" href="javascript:void(0)">{{ hostname }}</a>
+						</div>
+						<div class="status" id="indicators"></div>
+						<a class="theme-toggle-icon" href="javascript:void(0)" role="button" aria-label="Toggle theme">{{ theme_mode == '1' ? "☀️" : "🌙" }}</a>
+					</div>
+				</div>
+			</header>
+			<div class="darkMask"></div>
+			<div id="maincontent">
+				<div class="container">
+					<noscript>
+						<div class="alert-message error">
+							<h4>{{ _('JavaScript required!') }}</h4>
+							<p>{{ _('You must enable JavaScript in your browser or LuCI will not work properly.') }}</p>
+						</div>
+					</noscript>
+
+					<div id="tabmenu" style="display:none"></div>
+
+<div id="header-qr-popup">
+	<img src="/luci-static/resources/icons/WeChat.png" alt="QR code">
+</div>
+
+<script>
+(function() {
+    var apiUrl = '{{ dispatcher.build_url("admin/app/theme_mode") }}';
+    window.__currentThemeMode = '{{ theme_mode }}';
+
+    function toggleHeaderQR() {
+        var qr = document.getElementById('header-qr-popup');
+        if (qr) {
+            qr.style.display = qr.style.display === 'block' ? 'none' : 'block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var brands = document.querySelectorAll('.brand');
+        brands.forEach(function(brand) {
+            brand.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleHeaderQR();
+            });
+            brand.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleHeaderQR();
+            });
+        });
+
+        var toggleButton = document.querySelector('.theme-toggle-icon');
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var current = window.__currentThemeMode || '1';
+                var next = current === '0' ? '1' : '0';
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = apiUrl;
+                form.style.display = 'none';
+                var inputMethod = document.createElement('input');
+                inputMethod.type = 'hidden';
+                inputMethod.name = '_method';
+                inputMethod.value = 'POST';
+                form.appendChild(inputMethod);
+                var inputMode = document.createElement('input');
+                inputMode.type = 'hidden';
+                inputMode.name = 'mode';
+                inputMode.value = next;
+                form.appendChild(inputMode);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            var qr = document.getElementById('header-qr-popup');
+            var link = e.target.closest('.brand');
+            if (qr && qr.style.display === 'block' && !qr.contains(e.target) && !link) {
+                qr.style.display = 'none';
+            }
+        });
+    });
+})();
+</script>

@@ -1,0 +1,260 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "LAN"
+msgstr "LAN"
+
+msgid "WAN"
+msgstr "WAN"
+
+msgid "WAN Setting"
+msgstr "WAN设置"
+
+msgid "Work Mode"
+msgstr "工作模式"
+
+msgid "LAN Setting"
+msgstr "LAN 设置"
+
+msgid "Configure default LAN interface"
+msgstr "配置默认LAN接口"
+
+msgid "Protocol"
+msgstr "网络协议"
+
+msgid "IP Address"
+msgstr "IP 地址"
+
+msgid "Netmask"
+msgstr "子网掩码"
+
+msgid "Gateway"
+msgstr "网关"
+
+msgid "DHCP Server"
+msgstr "DHCP服务器"
+
+msgid "Enable DHCP"
+msgstr "启用DHCP"
+
+msgid "Start IP Offset"
+msgstr "起始地址"
+
+msgid "Pool Size"
+msgstr "地址池大小"
+
+msgid "Lease Time (minutes)"
+msgstr "租约时间（分钟）"
+
+msgid "Lease Time"
+msgstr "租约时间"
+
+msgid "Static"
+msgstr "手动设置"
+
+msgid "DHCP"
+msgstr "自动获取"
+
+msgid "10 minutes"
+msgstr "10分钟"
+
+msgid "15 minutes"
+msgstr "15分钟"
+
+msgid "30 minutes"
+msgstr "30分钟"
+
+msgid "45 minutes"
+msgstr "45分钟"
+
+msgid "1 hour"
+msgstr "1小时"
+
+msgid "2 hours"
+msgstr "2小时"
+
+msgid "3 hours"
+msgstr "3小时"
+
+msgid "4 hours"
+msgstr "4小时"
+
+msgid "5 hours"
+msgstr "5小时"
+
+msgid "6 hours"
+msgstr "6小时"
+
+msgid "8 hours"
+msgstr "8小时"
+
+msgid "12 hours"
+msgstr "12小时"
+
+msgid "1 day"
+msgstr "1天"
+
+msgid "2 days"
+msgstr "2天"
+
+msgid "3 days"
+msgstr "3天"
+
+msgid "7 days"
+msgstr "7天"
+
+msgid "Invalid IP address"
+msgstr "无效的IP地址"
+
+msgid "Invalid netmask"
+msgstr "无效的子网掩码"
+
+msgid "Invalid gateway"
+msgstr "无效的网关"
+
+msgid "Invalid DNS address"
+msgstr "无效的DNS地址"
+
+msgid "DNS1 must be set before DNS2"
+msgstr "必须先设置DNS1才能设置DNS2"
+
+msgid "PPPoE"
+msgstr "宽带拨号(PPPoE)"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Username is required"
+msgstr "用户名不能为空"
+
+msgid "Password is required"
+msgstr "密码不能为空"
+
+msgid "Gateway Mode"
+msgstr "网关模式"
+
+msgid "Bypass Mode"
+msgstr "旁路模式"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Loading..."
+msgstr "加载中..."
+
+msgid "Load failed"
+msgstr "加载失败"
+
+msgid "Saved successfully"
+msgstr "保存成功"
+
+msgid "Save failed"
+msgstr "保存失败"
+
+msgid "Updating LAN interface settings"
+msgstr "正在修改LAN口信息"
+
+msgid "This will take approximately 1 minute. Please access the management interface using the new IP address."
+msgstr "大约需要1分钟，请通过新的IP访问管理界面"
+
+msgid "Configure default WAN interface"
+msgstr "配置默认WAN接口"
+
+msgid "Are you sure you want to modify the LAN interface configuration?"
+msgstr "确定要修改lan口配置吗？"
+
+msgid "This will cause network disconnection."
+msgstr "修改后将会暂时断开网络"
+
+msgid "Configure network work mode"
+msgstr "配置网络工作模式"
+
+msgid "Work mode affects behavior management and Internet audit. Please select the correct mode. Note that downstream traffic cannot be counted in bypass mode."
+msgstr "工作模式影响行为管理和上网审计，请正确选择模式，注意旁路模式下无法统计下行流量"
+
+msgid "Net Mode"
+msgstr "网络模式"
+
+msgid "Meter Setting"
+msgstr "仪表设置"
+
+msgid "Configure traffic statistics"
+msgstr "配置流量统计"
+
+msgid "Traffic Statistics Interface"
+msgstr "流量统计接口"
+
+msgid "Please select"
+msgstr "请选择"
+
+msgid "Internet Record"
+msgstr "上网审计"
+
+msgid "Record Time"
+msgstr "记录时间"
+
+msgid "App Valid Time"
+msgstr "应用有效时长"
+
+msgid "days"
+msgstr "天"
+
+msgid "minutes"
+msgstr "分钟"
+
+msgid "App records minimum duration"
+msgstr "App记录最小时长"
+
+msgid "Internet record retention time"
+msgstr "上网记录保留时间"
+
+msgid "History Data Size"
+msgstr "历史数据大小"
+
+msgid "History Data Path"
+msgstr "历史数据目录"
+
+msgid "History data size limit"
+msgstr "历史数据大小限制"
+
+msgid "History data size limit (1-1024MB)"
+msgstr "历史数据大小限制 (1-1024 MB)"
+
+msgid "History data storage directory"
+msgstr "历史数据存储目录"
+
+msgid "History data storage directory (cannot be empty or /, max length 64)"
+msgstr "历史数据存储目录 (不能为空或/，最大长度64)"
+
+msgid "History data size must be an integer between 1 and 1024 MB"
+msgstr "历史数据大小必须是1-1024 MB之间的整数"
+
+msgid "History data path cannot be empty or /"
+msgstr "历史数据目录不能为空或/"
+
+msgid "History data path maximum length is 64 characters"
+msgstr "历史数据目录最大长度为64个字符"
+
+msgid "History Data Usage"
+msgstr "历史数据占用"
+
+msgid "Clean"
+msgstr "清除"
+
+msgid "Are you sure you want to clean all history data? This action cannot be undone."
+msgstr "确定清除全部历史数据吗？此操作无法撤销。"
+
+msgid "Data cleaned successfully"
+msgstr "数据清理成功"
+
+msgid "Clean failed"
+msgstr "清理失败"

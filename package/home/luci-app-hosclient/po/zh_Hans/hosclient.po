@@ -1,0 +1,185 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Clients"
+msgstr "客户端"
+
+msgid "Client Info"
+msgstr "客户端信息"
+
+msgid "Basic Info"
+msgstr "基础信息"
+
+msgid "App Statistics"
+msgstr "应用统计"
+
+msgid "Traffic Statistics"
+msgstr "流量统计"
+
+msgid "Traffic Statistics (24 Hours)"
+msgstr "流量统计（24小时）"
+
+msgid "Today Upstream Traffic"
+msgstr "上行流量"
+
+msgid "Today Downstream Traffic"
+msgstr "下行流量"
+
+msgid "Top Apps"
+msgstr "热门应用"
+
+msgid "Top Apps Statistics (24 Hours)"
+msgstr "热门应用统计（24小时）"
+
+msgid "Online/Offline Records"
+msgstr "上下线记录"
+
+msgid "Visit Records"
+msgstr "访问记录"
+
+msgid "MAC Address"
+msgstr "MAC地址"
+
+msgid "IP Address"
+msgstr "IP地址"
+
+msgid "Remark"
+msgstr "备注"
+
+msgid "Hostname"
+msgstr "主机名"
+
+msgid "Today Internet Duration"
+msgstr "上网时长"
+
+msgid "Today Online Duration"
+msgstr "在线时长"
+
+msgid "Online Status"
+msgstr "在线状态"
+
+msgid "App Name"
+msgstr "APP名称"
+
+msgid "First Visit"
+msgstr "开始访问时间"
+
+msgid "Last Visit"
+msgstr "最后访问时间"
+
+msgid "Duration"
+msgstr "时长"
+
+msgid "Filter Status"
+msgstr "过滤状态"
+
+msgid "Collecting data..."
+msgstr "正在收集数据..."
+
+msgid "Back to Clients"
+msgstr "返回列表"
+
+msgid "Missing MAC parameter"
+msgstr "缺少MAC参数"
+
+msgid "Online"
+msgstr "在线"
+
+msgid "Offline"
+msgstr "离线"
+
+msgid "Filtered"
+msgstr "已过滤"
+
+msgid "Unfiltered"
+msgstr "未过滤"
+
+msgid "Detail"
+msgstr "详细信息"
+
+msgid "Prev Page"
+msgstr "上一页"
+
+msgid "Next Page"
+msgstr "下一页"
+
+msgid "Total"
+msgstr "合计"
+
+msgid "Records"
+msgstr "条记录"
+
+msgid "Showing"
+msgstr "显示"
+
+msgid "Please enter a valid remark"
+msgstr "请输入合法的备注"
+
+msgid "Operation succeeded"
+msgstr "设置成功"
+
+msgid "Unknown App"
+msgstr "未知APP"
+
+msgid "App Time Statistics"
+msgstr "APP时间统计"
+
+msgid "Visit Time"
+msgstr "访问时长"
+
+msgid "Percentage"
+msgstr "占比"
+
+msgid "Device Info"
+msgstr "设备信息"
+
+msgid "Upstream Rate"
+msgstr "上行速率"
+
+msgid "Downstream Rate"
+msgstr "下行速率"
+
+msgid "Visiting URL"
+msgstr "访问URL"
+
+msgid "Active Apps"
+msgstr "访问应用"
+
+msgid "Edit Remark"
+msgstr "修改备注"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Confirm"
+msgstr "确定"
+
+msgid "Upstream"
+msgstr "上行"
+
+msgid "Downstream"
+msgstr "下行"
+
+msgid "h"
+msgstr "时"
+
+msgid "m"
+msgstr "分"
+
+msgid "s"
+msgstr "秒"
+
+msgid "min"
+msgstr "分钟"
+
+msgid "No records"
+msgstr "暂无记录"
+
+msgid "Online Event"
+msgstr "上线"
+
+msgid "Offline Event"
+msgstr "离线"
+
+msgid "Active"
+msgstr "活跃"

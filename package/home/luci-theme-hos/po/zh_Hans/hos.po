@@ -1,0 +1,20 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Factory reset will lose current configuration and reset the password."
+msgstr "恢复出厂会丢失现在的配置数据，并初始化登录密码"
+
+msgid "Ensure the router is powered on."
+msgstr "请确保路由器通电；"
+
+msgid "Press and hold the Reset button with a pin-like object for more than 5 seconds until the light turns off, then release to complete the factory reset."
+msgstr "用针状物按下Reset复位键5秒以上，待灯熄灭后松开，完成恢复出厂设置；"
+
+msgid "No password set, please set login password first"
+msgstr "尚未设置密码，请先设置登录密码"
+
+msgid "Go to password configuration"
+msgstr "前往密码设置"
+
+msgid "Forgot password?"
+msgstr "忘记密码？"

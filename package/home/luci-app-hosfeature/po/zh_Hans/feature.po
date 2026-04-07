@@ -1,0 +1,73 @@
+
+msgid "Feature Library"
+msgstr "特征库"
+
+msgid "Advance Settings"
+msgstr "高级设置"
+
+msgid "Upgrade or manage the feature library here."
+msgstr "在此升级或管理特征库。"
+
+msgid "The feature library is used to describe app features, app filtering effect and number-dependent feature library"
+msgstr "特征库用于描述应用特征、过滤效果及依赖特征库的数量"
+
+msgid "Current version"
+msgstr "当前版本"
+
+msgid "Feature format"
+msgstr "特征格式"
+
+msgid "App List"
+msgstr "应用列表"
+
+msgid "App number"
+msgstr "应用数量"
+
+msgid "Feature download"
+msgstr "特征库下载"
+
+msgid "App Feature"
+msgstr "应用特征"
+
+msgid "Feature Upgrade:"
+msgstr "特征库升级："
+
+msgid "Feature Upgrade"
+msgstr "特征库升级"
+
+msgid "Failed to update feature file, format error"
+msgstr "更新特征库失败，格式错误"
+
+msgid "Failed to extract feature file, file not found"
+msgstr "更新特征库失败，未找到文件"
+
+msgid "Update the feature file successfully, please refresh the page"
+msgstr "更新特征库成功，请刷新页面"
+
+msgid "Update the feature file successfully"
+msgstr "更新特征库成功"
+
+msgid "Updating, please wait..."
+msgstr "正在更新，请稍后..."
+
+msgid "Uploading, please wait..."
+msgstr "正在更新，请稍后..."
+
+msgid "You can download the feature library from the website(www.openappfilter.com),then upload it here."
+msgstr "可以在www.openappfilter.com网站下载最新应用特征库，然后升级。"
+
+msgid "Please select a file first"
+msgstr "请先选择文件"
+
+msgid "Uploading..."
+msgstr "正在上传..."
+
+msgid "Failed to update feature file"
+msgstr "更新特征库失败"
+
+msgid "Upload failed"
+msgstr "上传失败"
+
+msgid "File too large"
+msgstr "文件过大"
+
